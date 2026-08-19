@@ -1,0 +1,1 @@
+2026-08-19 17:28:38,124 [Worker-6: Loading available Gradle versions] INFO  o.e.b.c.i.u.g.PublishedGradleVersions - Gradle version information cache is not available. Remote download required.
