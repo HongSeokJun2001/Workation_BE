@@ -1,4 +1,4 @@
-package com.kh.workation.application.model.vo;
+package com.kh.workation.reservation.model.vo;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -12,15 +12,12 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
-//@Schema(description="워케이션 신청 엔티티")
-
 @Entity
-@Table(name="WORKATION_APPLICATION")
+@Table(name="RESERVATION")
 
 @DynamicInsert
 @DynamicUpdate
@@ -29,18 +26,15 @@ import lombok.ToString;
 @Setter
 @Getter
 @ToString
-public class Application {
+public class Reservation {
 
 	@Id
-	@Column(name = "WORKATION_ID")
+	@Column(name = "RESERVATION_ID")
 	@GeneratedValue(strategy=GenerationType.IDENTITY)
+	private int reservationId;
+	
+	@Column(name = "WORKATION_ID", nullable = false)
 	private int workationId;
-	
-	@Column(name = "COMPANY_ID", nullable = false)
-	private int companyId;
-	
-	@Column(name = "CREW_ID", nullable = false)
-	private int crewId;
 	
 	@Column(name = "FACILITY_ID")
 	private Integer facilityId; 
@@ -51,13 +45,12 @@ public class Application {
 	@Column(name = "END_DATE", nullable = false)
 	private LocalDate endDate;
 	
-	@Column(name = "REGION", length = 20)
-	private String region;
-	
-	@Column(name = "PURPOSE", length = 900)
-	private String purpose;
+	@Column(name="STATUS", columnDefinition="VARCHAR(20) DEFAULT 'RESERVED'")
+	private String status;
 	
 	@Column(name="CREATED_DATE", nullable=false, columnDefinition="TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
 	private LocalDateTime createdDate;
 	
+	@Column(name="CANCELLED_DATE")
+	private LocalDate cancelledDate;
 }
