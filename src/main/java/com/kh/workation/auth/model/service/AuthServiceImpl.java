@@ -1,5 +1,132 @@
 package com.kh.workation.auth.model.service;
 
-public class AuthServiceImpl {
+import java.nio.charset.StandardCharsets;
+import java.security.Key;
+import java.util.Date;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
+import com.kh.workation.auth.model.dao.AdminAuthDao;
+import com.kh.workation.auth.model.dao.AuthDao;
+import com.kh.workation.auth.model.dto.LoginRequest;
+import com.kh.workation.auth.model.dto.LoginResponse;
+import com.kh.workation.member.model.vo.Admin;
+import com.kh.workation.member.model.vo.Employee;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
+
+@Service
+public class AuthServiceImpl implements AuthService {
+
+    private final AuthDao authDao;
+    private final AdminAuthDao adminAuthDao;
+    private final PasswordEncoder passwordEncoder;
+    private final Key signingKey;
+
+    public AuthServiceImpl(
+            AuthDao authDao,
+            AdminAuthDao adminAuthDao,
+            PasswordEncoder passwordEncoder,
+            @Value("${jwt.secret}") String secretKey) {
+        this.authDao = authDao;
+        this.adminAuthDao = adminAuthDao;
+        this.passwordEncoder = passwordEncoder;
+        this.signingKey = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
+    }
+
+    @Override
+    public LoginResponse login(LoginRequest request) {
+        if ("ADMIN".equalsIgnoreCase(request.getLoginType())) {
+            Admin admin = adminAuthDao.findByLoginIdAndStatus(request.getLoginId(), Admin.STATUS_ACTIVE).orElse(null);
+
+            if (admin != null && passwordEncoder.matches(request.getPassword(), admin.getPassword())) {
+                return LoginResponse.builder()
+                        .accessToken(generateToken(admin.getLoginId(), admin.getRole()))
+                        .tokenType("Bearer")
+                        .role(admin.getRole())
+                        .build();
+            }
+
+            throw new IllegalArgumentException("관리자 아이디 또는 비밀번호가 올바르지 않습니다.");
+        }
+
+        if ("EMPLOYEE".equalsIgnoreCase(request.getLoginType())) {
+            Employee employee = authDao.findByLoginIdAndStatus(request.getLoginId(), Employee.STATUS_ACTIVE).orElse(null);
+
+            if (employee != null && passwordEncoder.matches(request.getPassword(), employee.getPassword())) {
+                return LoginResponse.builder()
+                        .accessToken(generateToken(employee.getLoginId(), Admin.ROLE_EMPLOYEE))
+                        .tokenType("Bearer")
+                        .role(Admin.ROLE_EMPLOYEE)
+                        .build();
+            }
+
+            throw new IllegalArgumentException("직원 아이디 또는 비밀번호가 올바르지 않습니다.");
+        }
+
+        throw new IllegalArgumentException("로그인 유형이 올바르지 않습니다.");
+    }
+
+    @Override
+    public boolean isValidToken(String token) {
+        try {
+            Jwts.parserBuilder()
+                    .setSigningKey(signingKey)
+                    .build()
+                    .parseClaimsJws(token);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    @Override
+    public boolean isAdminToken(String token) {
+        try {
+            Claims claims = Jwts.parserBuilder()
+                    .setSigningKey(signingKey)
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+
+            String role = claims.get("role", String.class);
+
+            return Admin.ROLE_SUPER_ADMIN.equals(role) || Admin.ROLE_COMPANY_ADMIN.equals(role);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    @Override
+    public boolean isSuperAdminToken(String token) {
+        try {
+            Claims claims = Jwts.parserBuilder()
+                    .setSigningKey(signingKey)
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+
+            return Admin.ROLE_SUPER_ADMIN.equals(claims.get("role", String.class));
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private String generateToken(String loginId, String role) {
+        Date now = new Date();
+        Date expiry = new Date(now.getTime() + 3600_000);
+
+        return Jwts.builder()
+                .setSubject(loginId)
+                .claim("role", role)
+                .setIssuedAt(now)
+                .setExpiration(expiry)
+                .signWith(signingKey, SignatureAlgorithm.HS256)
+                .compact();
+    }
 }
