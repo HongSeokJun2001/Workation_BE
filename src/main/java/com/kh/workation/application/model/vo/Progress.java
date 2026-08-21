@@ -36,7 +36,7 @@ public class Progress {
 	@Column(name = "WORKATION_ID", nullable = false)
 	private int workationId;
 	
-	@Column(name="STATUS", columnDefinition="VARCHAR(20) DEFAULT 'APPLY'")
+	@Column(name="STATUS", nullable=false, columnDefinition="VARCHAR(20) DEFAULT 'APPLY'")
 	private String status;
 	
 	@Column(name="APPLY_DATE", nullable=false, columnDefinition="TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
