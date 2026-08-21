@@ -39,7 +39,7 @@ public class Approval {
 	@Column(name = "ADMIN_ID", nullable = false)
 	private int adminId;
 	
-	@Column(name = "APPROVED_YN", length = 20, nullable = false)
+	@Column(name = "APPROVED_YN", nullable = false, columnDefinition="VARCHAR(20) DEFAULT 'APPLY'")
 	private String approvedYn;
 	
 	@Column(name = "REJECT_REASON", length = 900)
