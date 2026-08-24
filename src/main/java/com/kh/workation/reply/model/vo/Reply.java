@@ -53,20 +53,20 @@ public class Reply { // 댓글 수정은 없는지 ?
 	private Employee employee;
 	
 	
-	@JoinColumn(name="REPLY")
+	@JoinColumn(name="PARENT_REPLY_NO")
 	@ManyToOne(fetch = FetchType.LAZY)
-	private int parentReplyNo;
+	private Reply parentReplyNo;
 	
 	@Column(name="REPLY_CONTENT", nullable=false, length=500)
 	private String replyContent;
 	
-	@Column(name="REPLY_PRIVATE",columnDefinition="VARCHAR2(20) DEFAULT 'Y'")
+	@Column(name="REPLY_PRIVATE",columnDefinition="VARCHAR(20) DEFAULT 'Y'")
 	private String replyPrivate;
 	
 	@Column(name="CREATE_DATE", columnDefinition="TIMESTAMP DEFAULT CURRENT_TIMESTAMP" )
 	private LocalDateTime createDate;
 	
-	@Column(name="STATUS", nullable=false, columnDefinition="DEFAULT 'Y'")
+	@Column(name="STATUS", nullable=false, columnDefinition="VARCHAR(20) DEFAULT 'Y'")
 	private String status;
 	
 

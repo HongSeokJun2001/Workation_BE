@@ -55,7 +55,7 @@ public class Crew {
 	@Column(name="CREW_CONTENT", length=500)
 	private String crewContent;		//소개내용
 	
-	@Column(name="STATUS", nullable=false, columnDefinition="DEFAULT 'Y'")
+	@Column(name="STATUS", nullable=false, columnDefinition="VARCHAR(20) DEFAULT 'Y'")
 	private String Status;	//상태
 	
 	
