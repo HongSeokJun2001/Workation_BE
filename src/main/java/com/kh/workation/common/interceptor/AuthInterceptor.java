@@ -21,6 +21,10 @@ public class AuthInterceptor implements HandlerInterceptor {
 	@Override
 	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
 			throws Exception {
+
+		if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+			return true;
+		}
 		
 		String authHeader = request.getHeader("Authorization");
 
@@ -30,8 +34,14 @@ public class AuthInterceptor implements HandlerInterceptor {
 			if (authService.isAdminToken(token)) {
 				String requestUri = request.getRequestURI();
 
-				if (requestUri.contains("/admin/super-admin/")
+				if (requestUri.contains("/admin/super/")
 						&& !authService.isSuperAdminToken(token)) {
+					response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+					return false;
+				}
+
+				if (requestUri.contains("/admin/company/")
+						&& !authService.isCompanyAdminToken(token)) {
 					response.setStatus(HttpServletResponse.SC_FORBIDDEN);
 					return false;
 				}
