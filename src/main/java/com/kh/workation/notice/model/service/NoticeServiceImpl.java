@@ -8,7 +8,6 @@ import org.springframework.stereotype.Service;
 import com.kh.workation.notice.model.dao.NoticeDao;
 import com.kh.workation.notice.model.vo.Notice;
 
-
 @Service
 public class NoticeServiceImpl implements NoticeService{
 	

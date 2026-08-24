@@ -8,7 +8,7 @@ public class Pagination {
 	// > 4개의 기본 변수를 매개변수로 받아서 나머지 3개의 변수를 계산한 후
 	//   최종적으로 7개의 변수를 PageInfo 로 가공해서 리턴
 	public static PageInfo getPageInfo(int listCount, int currentPage,
-									   int pageLimit, int boardLimit) {
+									   int pageLimit, int listLimit) {
 		
 		// 지금부터 위의 4개의 변수를 가지고 아래의 3개의 변수를 계산해서 구해볼 것!!
 		
@@ -39,7 +39,7 @@ public class Pagination {
 		 * maxPage = (int)Math.ceil((double)listCount / boardLimit);
 		 */
 		
-		int maxPage = (int)Math.ceil((double)listCount / boardLimit);
+		int maxPage = (int)Math.ceil((double)listCount / listLimit);
 		
 		// * startPage : 페이지 하단에 보여질 페이징바의 시작수
 		// > 페이징 바의 시작수는 현재 내가 보고있는 페이지 기준으로 계산해서 도출
@@ -142,7 +142,7 @@ public class Pagination {
 			endPage = maxPage;
 		}
 		
-		return new PageInfo(listCount, currentPage, pageLimit, boardLimit,
+		return new PageInfo(listCount, currentPage, pageLimit, listLimit,
 							maxPage, startPage, endPage);
 		
 	}
