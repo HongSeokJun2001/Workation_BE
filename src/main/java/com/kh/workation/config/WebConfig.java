@@ -1,0 +1,15 @@
+package com.kh.workation.config;
+
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+@Configuration
+public class WebConfig implements WebMvcConfigurer {
+
+	public void addResourceHandlers(ResourceHandlerRegistry registry) {
+		// /uploads/** 경로 요청을 로컬 파일 시스템 ./uploads/ 경로로 매핑
+		registry.addResourceHandler("/uploads/**")
+				.addResourceLocations("file:./uploads/");
+	}
+}

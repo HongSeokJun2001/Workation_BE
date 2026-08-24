@@ -55,7 +55,7 @@ public class Notice {
 	@Column(name="VIEW_COUNT", nullable=false, columnDefinition="INT DEFAULT 0")
 	private int viewCount;
 	
-	@Column(name="STATUS", nullable=false, columnDefinition="DEFAULT 'Y'")
+	@Column(name="STATUS", nullable=false, columnDefinition="VARCHAR(20) DEFAULT 'Y'")
 	private String status;
 	
 	@Column(name="CREATE_DATE", nullable=false, columnDefinition="TIMESTAMP DEFAULT CURRENT_TIMESTAMP")

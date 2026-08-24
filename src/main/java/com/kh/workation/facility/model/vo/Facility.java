@@ -38,7 +38,7 @@ public class Facility {
 	@Id
 	@Column(name="FACILITY_ID")
 	@GeneratedValue(strategy=GenerationType.IDENTITY)
-	private int facilityId;
+	private Long facilityId;
 	
 	@Column(name="FACILITY_TYPE", length=20, nullable=false)
 	private String facilityType;
@@ -55,16 +55,13 @@ public class Facility {
 	@Column(name="DESCRIPTION", length=900, nullable=true)
 	private String description;
 	
-	@Column(name="STATUS", length=20, nullable=true)
+	@Column(name="STATUS", length=20, nullable=false)
 	private String status = "ACTIVE";
 	
 	@Column(name="ROOM_COUNT", nullable=false)
-	private int roomCount = 0;
+	private Long roomCount = 0L;
 	
-	@Column(name="MAX_PERSON", nullable=false)
-	private int maxPerson = 0;
-	
-	@Column(name="CREATED_DATE", updatable=false, columnDefinition="TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+	@Column(name="CREATED_DATE", updatable=false, columnDefinition="TIMESTAMP DEFAULT CURRENT_TIMESTAMP", nullable=false)
 	private LocalDateTime createdDate;
 	
 	// FACILITY_IMAGE 와의 1 : N 양방향 연관관계 매핑
