@@ -20,15 +20,14 @@ import lombok.Setter;
 
 public class FacilityResponseDto {
 
-	private int facilityId;
+	private Long facilityId;
 	private String facilityType;
 	private String facilityName;
 	private String region;
 	private String address;
 	private String description;
 	private String status;
-	private int roomCount;
-	private int maxPerson;
+	private Long roomCount;
 	private LocalDateTime createdDate;
 	
 	// 이미지 파일 경로 목록
@@ -52,7 +51,6 @@ public class FacilityResponseDto {
 				.description(facility.getDescription())
 				.status(facility.getStatus())
 				.roomCount(facility.getRoomCount())
-				.maxPerson(facility.getMaxPerson())
 				.createdDate(facility.getCreatedDate())
 				.imagePaths(paths)
 				.build();

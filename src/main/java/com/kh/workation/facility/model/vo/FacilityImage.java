@@ -38,7 +38,7 @@ public class FacilityImage {
 	@Id
 	@Column(name="IMAGE_ID")
 	@GeneratedValue(strategy=GenerationType.IDENTITY)
-	private int imageId;
+	private Long imageId;
 	
 	// FACILITY ㅔ이블과의 N:1 연관관계 매핑
 	@ManyToOne(fetch = FetchType.LAZY)
@@ -56,7 +56,7 @@ public class FacilityImage {
 	private String filePath;
 	
 	@CreationTimestamp
-	@Column(name="CREATED_DATE", updatable=false, columnDefinition="TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+	@Column(name="CREATED_DATE", updatable=false, nullable=false)
 	private LocalDateTime createdDate;
 	
 }
