@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.regex.Pattern;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +19,7 @@ import com.kh.workation.member.model.dto.AdminUpdateRequest;
 import com.kh.workation.member.model.dto.EmployeeDetailResponse;
 import com.kh.workation.member.model.dto.EmployeeSignupRequest;
 import com.kh.workation.member.model.dto.EmployeeUpdateRequest;
+import com.kh.workation.member.model.event.EmployeeApprovalEvent;
 import com.kh.workation.member.model.vo.Admin;
 import com.kh.workation.member.model.vo.Company;
 import com.kh.workation.member.model.vo.Employee;
@@ -38,6 +40,9 @@ public class MemberServiceImpl implements MemberService {
 
 	@Autowired
 	private PasswordEncoder passwordEncoder;
+
+	@Autowired
+	private ApplicationEventPublisher eventPublisher;
 
 	// ADMIN 테이블에서 최고관리자와 본사관리자를 조회한다.
 	@Override
@@ -76,15 +81,34 @@ public class MemberServiceImpl implements MemberService {
 		return toAdminListResponse(adminDao.findByCompanyIdAndRoleAndStatus(companyId, Admin.ROLE_COMPANY_ADMIN, status));
 	}
 
-	// EMPLOYEE 테이블에서 활성 직원만 조회한다.
+	// EMPLOYEE 테이블에서 조건에 맞는 직원만 조회한다.
 	@Override
 	@Transactional(readOnly = true)
-	public List<Employee> selectEmployeeList(String status, Long companyId) {
-		if (isAllStatus(status)) {
-			return employeeDao.findByCompanyId(companyId);
+	public List<Employee> selectEmployeeList(String status, String isProgressed, Long companyId) {
+		List<Employee> employees = isAllStatus(status)
+				? employeeDao.findByCompanyId(companyId)
+				: employeeDao.findByCompanyIdAndStatus(companyId, status);
+
+		if (isAllProgressed(isProgressed)) {
+			return employees;
 		}
 
-		return employeeDao.findByCompanyIdAndStatus(companyId, status);
+		return employees.stream()
+				.filter(employee -> isProgressed.equalsIgnoreCase(employee.getIsProgressed()))
+				.toList();
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public EmployeeDetailResponse selectEmployeeSelf(String loginId, Long companyId) {
+		Employee employee = employeeDao.findByLoginIdAndStatus(loginId, Employee.STATUS_ACTIVE)
+				.orElseThrow(() -> new IllegalArgumentException("해당 직원 계정을 찾을 수 없습니다."));
+
+		if (!companyId.equals(employee.getCompanyId())) {
+			throw new IllegalArgumentException("조회 권한이 없는 직원 계정입니다.");
+		}
+
+		return EmployeeDetailResponse.from(employee, findCompanyName(employee.getCompanyId()));
 	}
 
 	@Override
@@ -177,6 +201,61 @@ public class MemberServiceImpl implements MemberService {
 	}
 
 	@Override
+	@Transactional
+	public EmployeeDetailResponse approveEmployee(Long employeeId, Long companyId) {
+		Employee employee = employeeDao.findById(employeeId)
+				.orElseThrow(() -> new IllegalArgumentException("해당 직원 계정을 찾을 수 없습니다."));
+
+		if (!companyId.equals(employee.getCompanyId())) {
+			throw new IllegalArgumentException("승인 권한이 없는 직원 계정입니다.");
+		}
+
+		if (!Employee.STATUS_LOCKED.equals(employee.getStatus())
+				|| !Employee.PROGRESSED_N.equals(employee.getIsProgressed())) {
+			throw new IllegalArgumentException("승인 대기 상태의 직원 계정이 아닙니다.");
+		}
+
+		employee.setStatus(Employee.STATUS_ACTIVE);
+		employee.setIsProgressed(Employee.PROGRESSED_Y);
+		eventPublisher.publishEvent(new EmployeeApprovalEvent(employee.getEmail(), employee.getEmployeeName()));
+
+		return EmployeeDetailResponse.from(employee, findCompanyName(employee.getCompanyId()));
+	}
+
+	@Override
+	@Transactional
+	public EmployeeDetailResponse updateEmployeeSelf(String loginId, Long companyId, EmployeeUpdateRequest request) {
+		Employee employee = employeeDao.findByLoginIdAndStatus(loginId, Employee.STATUS_ACTIVE)
+				.orElseThrow(() -> new IllegalArgumentException("해당 직원 계정을 찾을 수 없습니다."));
+
+		if (!companyId.equals(employee.getCompanyId())) {
+			throw new IllegalArgumentException("수정 권한이 없는 직원 계정입니다.");
+		}
+
+		if (request.getLoginId() != null && !request.getLoginId().isBlank()) {
+			employee.setLoginId(request.getLoginId());
+		}
+		if (request.getPhone() != null && !request.getPhone().isBlank()) {
+			employee.setPhone(request.getPhone());
+		}
+		if (request.getEmail() != null && !request.getEmail().isBlank()) {
+			employee.setEmail(request.getEmail());
+		}
+		if (request.getDepartment() != null) {
+			employee.setDepartment(request.getDepartment());
+		}
+		if (request.getPosition() != null) {
+			employee.setPosition(request.getPosition());
+		}
+		if (request.getPassword() != null && !request.getPassword().isBlank()) {
+			validatePassword(request.getPassword());
+			employee.setPassword(passwordEncoder.encode(request.getPassword()));
+		}
+
+		return EmployeeDetailResponse.from(employee, findCompanyName(employee.getCompanyId()));
+	}
+
+	@Override
 	@Transactional(readOnly = true)
 	public boolean existsCompany(String businessNo, String companyName) {
 		return companyDao.findByBusinessNoAndCompanyName(businessNo, companyName).isPresent();
@@ -221,6 +300,10 @@ public class MemberServiceImpl implements MemberService {
 
 	private boolean isAllStatus(String status) {
 		return status == null || status.isBlank() || "ALL".equalsIgnoreCase(status);
+	}
+
+	private boolean isAllProgressed(String isProgressed) {
+		return isProgressed == null || isProgressed.isBlank() || "ALL".equalsIgnoreCase(isProgressed);
 	}
 
 	private void applyAdminUpdate(Admin admin, AdminUpdateRequest request) {

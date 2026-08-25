@@ -41,6 +41,9 @@ public class EmployeeUpdateRequest {
     @Schema(description = "상태", example = "ACTIVE", allowableValues = {"ACTIVE", "LOCKED"})
     private String status;
 
+    @Schema(description = "회원가입 처리 여부", example = "Y", allowableValues = {"Y", "N"})
+    private String isProgressed;
+
     @Schema(description = "입사일", example = "2026-08-20")
     private LocalDate hireDate;
 

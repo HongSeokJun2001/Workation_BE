@@ -17,7 +17,9 @@ public interface MemberService {
 
     List<AdminListResponse> selectCompanyAdminList(String status, Long companyId);
 
-    List<Employee> selectEmployeeList(String status, Long companyId);
+    List<Employee> selectEmployeeList(String status, String isProgressed, Long companyId);
+
+    EmployeeDetailResponse selectEmployeeSelf(String loginId, Long companyId);
 
     AdminDetailResponse selectAdminDetail(Long adminId);
 
@@ -30,6 +32,10 @@ public interface MemberService {
     AdminDetailResponse updateCompanyAdmin(Long adminId, Long companyId, AdminUpdateRequest request);
 
     EmployeeDetailResponse updateEmployee(Long employeeId, Long companyId, EmployeeUpdateRequest request);
+
+    EmployeeDetailResponse approveEmployee(Long employeeId, Long companyId);
+
+    EmployeeDetailResponse updateEmployeeSelf(String loginId, Long companyId, EmployeeUpdateRequest request);
 
     boolean existsCompany(String businessNo, String companyName);
 

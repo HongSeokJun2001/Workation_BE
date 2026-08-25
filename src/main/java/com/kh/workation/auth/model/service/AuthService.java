@@ -16,4 +16,6 @@ public interface AuthService {
 	boolean isCompanyAdminToken(String token);
 
 	Long getCompanyId(String token);
+
+	String getLoginId(String token);
 }
