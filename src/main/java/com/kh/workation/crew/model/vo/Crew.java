@@ -56,7 +56,7 @@ public class Crew {
 	private String crewContent;		//소개내용
 	
 	@Column(name="STATUS", nullable=false, columnDefinition="VARCHAR(20) DEFAULT 'Y'")
-	private String Status;	//상태
+	private String status;	//상태
 	
 	
 	@Column(name="CREATE_DATE", nullable=false, columnDefinition="TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
