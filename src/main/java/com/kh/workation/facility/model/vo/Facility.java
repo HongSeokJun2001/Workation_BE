@@ -68,5 +68,13 @@ public class Facility {
 	@OneToMany(mappedBy = "facility", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
 	private List<FacilityImage> imageList = new ArrayList<>();
 	
+	// 양방향 연관관계 편의 메서드
+	public void addImage(FacilityImage image) {
+		if(this.imageList == null) {
+			this.imageList = new ArrayList<>();
+		}
+		this.imageList.add(image);
+		image.setFacility(this); // 자식(FacilityImage) 객체에도 부모 (Facility) 객체 설정
+	}
 	
 }
