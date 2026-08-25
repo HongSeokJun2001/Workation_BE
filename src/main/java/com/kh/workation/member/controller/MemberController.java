@@ -63,8 +63,9 @@ public class MemberController {
 	@GetMapping("/admin/company/member/employee-list")
 	public ResponseEntity<List<Employee>> selectEmployeeList(
 			@RequestParam(defaultValue = "ALL") String status,
+			@RequestParam(defaultValue = "ALL") String isProgressed,
 			HttpServletRequest request) {
-		return ResponseEntity.ok(memberService.selectEmployeeList(status, getCompanyId(request)));
+		return ResponseEntity.ok(memberService.selectEmployeeList(status, isProgressed, getCompanyId(request)));
 	}
 
 	@Operation(summary="최고관리자용 관리자 계정 상세 조회", description="최고관리자가 ADMIN 계정 상세 정보를 조회합니다.")
@@ -96,6 +97,18 @@ public class MemberController {
 	public ResponseEntity<?> selectEmployeeDetail(@PathVariable Long employeeId, HttpServletRequest request) {
 		try {
 			EmployeeDetailResponse response = memberService.selectEmployeeDetail(employeeId, getCompanyId(request));
+			return ResponseEntity.ok(response);
+		} catch (IllegalArgumentException e) {
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+		}
+	}
+
+	@Operation(summary="직원 본인 정보 조회", description="로그인한 직원 본인의 계정 정보만 조회합니다.")
+	@ApiResponse(responseCode="200", description="조회 성공")
+	@GetMapping("/employee/my-info")
+	public ResponseEntity<?> selectMyEmployeeInfo(HttpServletRequest request) {
+		try {
+			EmployeeDetailResponse response = memberService.selectEmployeeSelf(getLoginId(request), getCompanyId(request));
 			return ResponseEntity.ok(response);
 		} catch (IllegalArgumentException e) {
 			return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
@@ -141,6 +154,32 @@ public class MemberController {
 		}
 	}
 
+	@Operation(summary="본사관리자용 직원 계정 승인", description="승인 대기 상태의 같은 회사 직원 계정을 활성화하고 승인 안내 메일을 전송합니다.")
+	@ApiResponse(responseCode="200", description="승인 성공")
+	@PutMapping("/admin/company/member/employee/{employeeId}/approval")
+	public ResponseEntity<?> approveEmployee(
+			@PathVariable Long employeeId,
+			HttpServletRequest httpRequest) {
+		try {
+			return ResponseEntity.ok(memberService.approveEmployee(employeeId, getCompanyId(httpRequest)));
+		} catch (IllegalArgumentException e) {
+			return ResponseEntity.badRequest().body(e.getMessage());
+		}
+	}
+
+	@Operation(summary="직원 본인 정보 수정", description="로그인한 직원 본인의 정보만 수정합니다.")
+	@ApiResponse(responseCode="200", description="수정 성공")
+	@PutMapping("/employee/my-info")
+	public ResponseEntity<?> updateMyEmployeeInfo(
+			@RequestBody EmployeeUpdateRequest request,
+			HttpServletRequest httpRequest) {
+		try {
+			return ResponseEntity.ok(memberService.updateEmployeeSelf(getLoginId(httpRequest), getCompanyId(httpRequest), request));
+		} catch (IllegalArgumentException e) {
+			return ResponseEntity.badRequest().body(e.getMessage());
+		}
+	}
+
 	@Operation(summary="회사 정보 확인", description="사업자번호와 회사명이 일치하는 회사가 있는지 확인합니다.")
 	@ApiResponse(responseCode="200", description="확인 성공")
 	@GetMapping("/public/company/check")
@@ -172,5 +211,11 @@ public class MemberController {
 		String authorization = request.getHeader("Authorization");
 		String token = authorization.substring(7);
 		return authService.getCompanyId(token);
+	}
+
+	private String getLoginId(HttpServletRequest request) {
+		String authorization = request.getHeader("Authorization");
+		String token = authorization.substring(7);
+		return authService.getLoginId(token);
 	}
 }

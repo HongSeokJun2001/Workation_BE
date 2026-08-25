@@ -148,6 +148,21 @@ public class AuthServiceImpl implements AuthService {
         }
     }
 
+    @Override
+    public String getLoginId(String token) {
+        try {
+            Claims claims = Jwts.parserBuilder()
+                    .setSigningKey(signingKey)
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+
+            return claims.getSubject();
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     private String generateToken(String loginId, String role, Long companyId) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + 3600_000);
