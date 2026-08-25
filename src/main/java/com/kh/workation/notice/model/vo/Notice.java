@@ -40,7 +40,7 @@ public class Notice {
 	@Id
 	@Column(name="NOTICE_ID")
 	@GeneratedValue(strategy=GenerationType.IDENTITY)
-	private int noticeId;
+	private Integer noticeId;
 	
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name="ADMIN_ID")
@@ -53,7 +53,7 @@ public class Notice {
 	private String noticeContent;
 	
 	@Column(name="VIEW_COUNT", nullable=false, columnDefinition="INT DEFAULT 0")
-	private int viewCount;
+	private Integer viewCount;
 	
 	@Column(name="STATUS", nullable=false, columnDefinition="VARCHAR(20) DEFAULT 'Y'")
 	private String status;

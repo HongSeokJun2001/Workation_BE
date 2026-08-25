@@ -1,15 +1,18 @@
 package com.kh.workation.notice.model.service;
 
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import com.kh.workation.notice.model.vo.Notice;
 
 public interface NoticeService {
 	
 	
-	List<Notice> selectNoticeList();
+	Page<Notice> selectNoticeList(Pageable pageable);
 	
-	Notice selectNoticeDetail(int noticeId);
+	Notice selectNotice(int noticeId);
+	
+	int increaseCount(int noticeId);
 	
 	Notice insertNotice(Notice n);
 	
