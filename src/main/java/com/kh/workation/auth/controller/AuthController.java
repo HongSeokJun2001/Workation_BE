@@ -29,12 +29,12 @@ public class AuthController {
 
 	@PostMapping("/login")
 	@Operation(summary = "로그인", description = "로그인 유형(관리자/직원)에 따라 계정을 조회하고 JWT 토큰을 발급합니다.")
-	public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request) {
+	public ResponseEntity<?> login(@RequestBody LoginRequest request) {
 		try {
 			LoginResponse response = authService.login(request);
 			return ResponseEntity.ok(response);
 		} catch (IllegalArgumentException e) {
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
 		}
 	}
 

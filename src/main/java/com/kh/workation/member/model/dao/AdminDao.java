@@ -12,6 +12,10 @@ public interface AdminDao extends JpaRepository<Admin, Long> {
 
     List<Admin> findByRoleAndStatus(String role, String status);
 
+    List<Admin> findByCompanyIdAndRole(Long companyId, String role);
+
+    List<Admin> findByCompanyIdAndRoleAndStatus(Long companyId, String role, String status);
+
     List<Admin> findByRoleIn(List<String> roles);
 
     List<Admin> findByRoleInAndStatus(List<String> roles, String status);

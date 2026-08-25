@@ -46,7 +46,7 @@ public class AuthServiceImpl implements AuthService {
 
             if (admin != null && passwordEncoder.matches(request.getPassword(), admin.getPassword())) {
                 return LoginResponse.builder()
-                        .accessToken(generateToken(admin.getLoginId(), admin.getRole()))
+                    .accessToken(generateToken(admin.getLoginId(), admin.getRole(), admin.getCompanyId()))
                         .tokenType("Bearer")
                         .role(admin.getRole())
                         .build();
@@ -60,7 +60,7 @@ public class AuthServiceImpl implements AuthService {
 
             if (employee != null && passwordEncoder.matches(request.getPassword(), employee.getPassword())) {
                 return LoginResponse.builder()
-                        .accessToken(generateToken(employee.getLoginId(), Admin.ROLE_EMPLOYEE))
+                    .accessToken(generateToken(employee.getLoginId(), Admin.ROLE_EMPLOYEE, employee.getCompanyId()))
                         .tokenType("Bearer")
                         .role(Admin.ROLE_EMPLOYEE)
                         .build();
@@ -117,15 +117,52 @@ public class AuthServiceImpl implements AuthService {
         }
     }
 
-    private String generateToken(String loginId, String role) {
+    @Override
+    public boolean isCompanyAdminToken(String token) {
+        try {
+            Claims claims = Jwts.parserBuilder()
+                    .setSigningKey(signingKey)
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+
+            return Admin.ROLE_COMPANY_ADMIN.equals(claims.get("role", String.class));
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    @Override
+    public Long getCompanyId(String token) {
+        try {
+            Claims claims = Jwts.parserBuilder()
+                    .setSigningKey(signingKey)
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+
+            Number companyId = claims.get("companyId", Number.class);
+            return companyId == null ? null : companyId.longValue();
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private String generateToken(String loginId, String role, Long companyId) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + 3600_000);
 
-        return Jwts.builder()
+        var tokenBuilder = Jwts.builder()
                 .setSubject(loginId)
                 .claim("role", role)
                 .setIssuedAt(now)
-                .setExpiration(expiry)
+                .setExpiration(expiry);
+
+        if (companyId != null) {
+            tokenBuilder.claim("companyId", companyId);
+        }
+
+        return tokenBuilder
                 .signWith(signingKey, SignatureAlgorithm.HS256)
                 .compact();
     }
