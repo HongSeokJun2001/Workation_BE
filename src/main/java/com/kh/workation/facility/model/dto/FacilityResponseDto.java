@@ -31,14 +31,14 @@ public class FacilityResponseDto {
 	private LocalDateTime createdDate;
 	
 	// 이미지 파일 경로 목록
-	private List<String> imagePaths;
+	private List<FacilityImageDto> imagePaths;
 	
 	// Entity -> DTO 변환 생성자/메서드
 	public static FacilityResponseDto fromEntity(Facility facility) {
-		List<String> paths = null;
+		List<FacilityImageDto> images = null;
 		if(facility.getImageList() != null) {
-			paths = facility.getImageList().stream()
-					.map(img -> img.getFilePath())
+			images = facility.getImageList().stream()
+					.map(FacilityImageDto::new)
 					.collect(Collectors.toList());
 		}
 		
@@ -52,7 +52,7 @@ public class FacilityResponseDto {
 				.status(facility.getStatus())
 				.roomCount(facility.getRoomCount())
 				.createdDate(facility.getCreatedDate())
-				.imagePaths(paths)
+				.imagePaths(images)
 				.build();
 	}
 	

@@ -6,6 +6,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.kh.workation.facility.model.dto.FacilityRequestDto;
 import com.kh.workation.facility.model.dto.FacilityResponseDto;
+import com.kh.workation.facility.model.dto.FacilityUpdateDto;
 
 public interface FacilityService {
 
@@ -21,4 +22,9 @@ public interface FacilityService {
 	// 4. 시설 등록
 	FacilityResponseDto insertFacility(FacilityRequestDto requestDto, MultipartFile[] upfiles, String savePath);
 	
+	// 5. 시설 수정
+	FacilityResponseDto updateFacility(Long facilityId, FacilityUpdateDto updateDto, MultipartFile[] upfiles, String savePath);
+	
+	// 6. 시설 삭제
+	Long deleteFacility(Long facility);
 }
