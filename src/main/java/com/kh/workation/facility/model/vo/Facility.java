@@ -65,7 +65,7 @@ public class Facility {
 	private LocalDateTime createdDate;
 	
 	// FACILITY_IMAGE 와의 1 : N 양방향 연관관계 매핑
-	@OneToMany(mappedBy = "facility", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+	@OneToMany(mappedBy = "facility", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<FacilityImage> imageList = new ArrayList<>();
 	
 	// 양방향 연관관계 편의 메서드
