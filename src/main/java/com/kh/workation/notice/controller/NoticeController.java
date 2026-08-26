@@ -148,7 +148,7 @@ public class NoticeController {
 				// XSS 공격 방지 처리 - 공통 코드 작업 참고
 				//admin객체 우선 주입 
 				Admin tempAdmin = new Admin();
-			    tempAdmin.setAdminId(1L);
+			    tempAdmin.setAdminId(3L);
 			    n.setAdmin(tempAdmin);
 				
 				Notice insertNo = noticeService.insertNotice(n);
@@ -158,15 +158,6 @@ public class NoticeController {
 				return ResponseEntity.status(HttpStatus.OK)
 									 .body(message);
 		
-		
-//				System.out.println("========== Notice ==========");
-//			    System.out.println(n);
-//			    System.out.println("title = " + n.getNoticeTitle());
-//			    System.out.println("content = " + n.getNoticeContent());
-//			    System.out.println("status = " + n.getStatus());
-//			    System.out.println("============================");
-//		
-//			    return ResponseEntity.ok("success");
 			
 			}
 	
