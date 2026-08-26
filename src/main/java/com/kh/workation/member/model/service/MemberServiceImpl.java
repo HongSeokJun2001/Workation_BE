@@ -16,6 +16,8 @@ import com.kh.workation.member.model.dao.EmployeeDao;
 import com.kh.workation.member.model.dto.AdminDetailResponse;
 import com.kh.workation.member.model.dto.AdminListResponse;
 import com.kh.workation.member.model.dto.AdminUpdateRequest;
+import com.kh.workation.member.model.dto.CompanyAdminCreateRequest;
+import com.kh.workation.member.model.dto.SuperAdminCreateRequest;
 import com.kh.workation.member.model.dto.EmployeeDetailResponse;
 import com.kh.workation.member.model.dto.EmployeeSignupRequest;
 import com.kh.workation.member.model.dto.EmployeeUpdateRequest;
@@ -79,6 +81,12 @@ public class MemberServiceImpl implements MemberService {
 		}
 
 		return toAdminListResponse(adminDao.findByCompanyIdAndRoleAndStatus(companyId, Admin.ROLE_COMPANY_ADMIN, status));
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public List<Company> selectActiveCompanyList() {
+		return companyDao.findByCompanyStatus(Company.STATUS_ACTIVE);
 	}
 
 	// EMPLOYEE 테이블에서 조건에 맞는 직원만 조회한다.
@@ -168,6 +176,72 @@ public class MemberServiceImpl implements MemberService {
 
 		applyAdminUpdate(admin, request);
 		return AdminDetailResponse.from(admin, findCompanyName(admin.getCompanyId()));
+	}
+
+	@Override
+	@Transactional
+	public AdminDetailResponse createCompanyAdmin(Long companyId, CompanyAdminCreateRequest request) {
+		return createCompanyAdmin(companyId, request, "본사관리자");
+	}
+
+	@Override
+	@Transactional
+	public AdminDetailResponse createCompanyAdminBySuper(CompanyAdminCreateRequest request) {
+		if (request.getCompanyId() == null) {
+			throw new IllegalArgumentException("회사를 선택해주세요.");
+		}
+
+		return createCompanyAdmin(request.getCompanyId(), request, "본사관리자");
+	}
+
+	private AdminDetailResponse createCompanyAdmin(Long companyId, CompanyAdminCreateRequest request, String accountType) {
+		if (companyDao.findById(companyId)
+				.filter(company -> Company.STATUS_ACTIVE.equals(company.getCompanyStatus())).isEmpty()) {
+			throw new IllegalArgumentException("선택한 회사가 존재하지 않거나 비활성 상태입니다.");
+		}
+
+		if (request.getLoginId() == null || request.getLoginId().isBlank()
+				|| request.getPassword() == null || request.getPassword().isBlank()) {
+			throw new IllegalArgumentException("아이디와 비밀번호를 입력해주세요.");
+		}
+
+		if (adminDao.existsByLoginId(request.getLoginId())) {
+			throw new IllegalArgumentException("이미 사용 중인 관리자 아이디입니다.");
+		}
+
+		validatePassword(request.getPassword());
+
+		Admin admin = new Admin();
+		admin.setCompanyId(companyId);
+		admin.setLoginId(request.getLoginId());
+		admin.setPassword(passwordEncoder.encode(request.getPassword()));
+		admin.setRole(Admin.ROLE_COMPANY_ADMIN);
+		admin.setStatus(Admin.STATUS_ACTIVE);
+
+		return AdminDetailResponse.from(adminDao.save(admin), findCompanyName(companyId));
+	}
+
+	@Override
+	@Transactional
+	public AdminDetailResponse createSuperAdmin(SuperAdminCreateRequest request) {
+		if (request.getLoginId() == null || request.getLoginId().isBlank()
+				|| request.getPassword() == null || request.getPassword().isBlank()) {
+			throw new IllegalArgumentException("아이디와 비밀번호를 입력해주세요.");
+		}
+
+		if (adminDao.existsByLoginId(request.getLoginId())) {
+			throw new IllegalArgumentException("이미 사용 중인 관리자 아이디입니다.");
+		}
+
+		validatePassword(request.getPassword());
+
+		Admin admin = new Admin();
+		admin.setLoginId(request.getLoginId());
+		admin.setPassword(passwordEncoder.encode(request.getPassword()));
+		admin.setRole(Admin.ROLE_SUPER_ADMIN);
+		admin.setStatus(Admin.STATUS_ACTIVE);
+
+		return AdminDetailResponse.from(adminDao.save(admin), null);
 	}
 
 	@Override

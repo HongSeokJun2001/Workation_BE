@@ -1,6 +1,7 @@
 package com.kh.workation.member.controller;
 	
 import java.util.List;
+import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,10 +18,18 @@ import com.kh.workation.auth.model.service.AuthService;
 import com.kh.workation.member.model.dto.AdminDetailResponse;
 import com.kh.workation.member.model.dto.AdminListResponse;
 import com.kh.workation.member.model.dto.AdminUpdateRequest;
+import com.kh.workation.member.model.dto.CompanyAdminCreateRequest;
+import com.kh.workation.member.model.dto.SuperAdminCreateRequest;
 import com.kh.workation.member.model.dto.EmployeeDetailResponse;
+import com.kh.workation.member.model.dto.EmployeeFindIdRequest;
+import com.kh.workation.member.model.dto.EmployeeFindPasswordRequest;
+import com.kh.workation.member.model.dto.EmployeePasswordResetRequest;
+import com.kh.workation.member.model.dto.EmployeeRecoveryVerifyRequest;
 import com.kh.workation.member.model.dto.EmployeeSignupRequest;
 import com.kh.workation.member.model.dto.EmployeeUpdateRequest;
 import com.kh.workation.member.model.vo.Employee;
+import com.kh.workation.member.model.vo.Company;
+import com.kh.workation.member.model.service.EmployeeAccountRecoveryService;
 import com.kh.workation.member.model.service.MemberService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -40,6 +49,9 @@ public class MemberController {
 	@Autowired
 	private AuthService authService;
 
+	@Autowired
+	private EmployeeAccountRecoveryService employeeAccountRecoveryService;
+
 	@Operation(summary="최고관리자 및 본사관리자 목록 조회", description="ADMIN 테이블에서 최고관리자와 본사관리자를 함께 조회합니다.")
 	@ApiResponse(responseCode="200", description="조회 성공")
 	@GetMapping("/admin/super/member/list")
@@ -47,6 +59,13 @@ public class MemberController {
 			@RequestParam(defaultValue = "ALL") String status,
 			@RequestParam(defaultValue = "ALL") String target) {
 		return ResponseEntity.ok(memberService.selectAdminList(status, target));
+	}
+
+	@Operation(summary="회사 목록 조회", description="최고관리자가 본사관리자 생성 시 선택할 수 있는 회사 목록을 조회합니다.")
+	@ApiResponse(responseCode="200", description="조회 성공")
+	@GetMapping("/admin/super/company-list")
+	public ResponseEntity<List<Company>> selectActiveCompanyList() {
+		return ResponseEntity.ok(memberService.selectActiveCompanyList());
 	}
 
 	@Operation(summary="본사관리자 목록 조회", description="ADMIN 테이블에서 본사관리자 목록만 조회합니다.")
@@ -126,6 +145,17 @@ public class MemberController {
 		}
 	}
 
+	@Operation(summary="최고관리자 계정 생성", description="최고관리자 권한의 관리자 계정을 생성합니다.")
+	@ApiResponse(responseCode="200", description="생성 성공")
+	@PostMapping("/admin/super/member/admin")
+	public ResponseEntity<?> createSuperAdmin(@RequestBody SuperAdminCreateRequest request) {
+		try {
+			return ResponseEntity.ok(memberService.createSuperAdmin(request));
+		} catch (IllegalArgumentException e) {
+			return ResponseEntity.badRequest().body(e.getMessage());
+		}
+	}
+
 	@Operation(summary="본사관리자용 관리자 계정 수정", description="본사관리자가 같은 회사의 본사관리자 계정을 수정합니다.")
 	@ApiResponse(responseCode="200", description="수정 성공")
 	@PutMapping("/admin/company/member/admin/{adminId}")
@@ -135,6 +165,30 @@ public class MemberController {
 			HttpServletRequest httpRequest) {
 		try {
 			return ResponseEntity.ok(memberService.updateCompanyAdmin(adminId, getCompanyId(httpRequest), request));
+		} catch (IllegalArgumentException e) {
+			return ResponseEntity.badRequest().body(e.getMessage());
+		}
+	}
+
+	@Operation(summary="본사관리자 계정 생성", description="현재 본사관리자와 같은 회사의 본사관리자 계정을 생성합니다.")
+	@ApiResponse(responseCode="200", description="생성 성공")
+	@PostMapping("/admin/company/member/admin")
+	public ResponseEntity<?> createCompanyAdmin(
+			@RequestBody CompanyAdminCreateRequest request,
+			HttpServletRequest httpRequest) {
+		try {
+			return ResponseEntity.ok(memberService.createCompanyAdmin(getCompanyId(httpRequest), request));
+		} catch (IllegalArgumentException e) {
+			return ResponseEntity.badRequest().body(e.getMessage());
+		}
+	}
+
+	@Operation(summary="최고관리자의 본사관리자 계정 생성", description="최고관리자가 선택한 회사 소속의 본사관리자 계정을 생성합니다.")
+	@ApiResponse(responseCode="200", description="생성 성공")
+	@PostMapping("/admin/super/member/company-admin")
+	public ResponseEntity<?> createCompanyAdminBySuper(@RequestBody CompanyAdminCreateRequest request) {
+		try {
+			return ResponseEntity.ok(memberService.createCompanyAdminBySuper(request));
 		} catch (IllegalArgumentException e) {
 			return ResponseEntity.badRequest().body(e.getMessage());
 		}
@@ -202,6 +256,55 @@ public class MemberController {
 	public ResponseEntity<?> signupEmployee(@RequestBody EmployeeSignupRequest request) {
 		try {
 			return ResponseEntity.ok(memberService.signupEmployee(request));
+		} catch (IllegalArgumentException e) {
+			return ResponseEntity.badRequest().body(e.getMessage());
+		}
+	}
+
+	@Operation(summary="직원 아이디 찾기 인증번호 발송", description="직원 본인 확인 정보가 일치하면 등록된 이메일로 인증번호를 발송합니다.")
+	@ApiResponse(responseCode="200", description="인증번호 발송 성공")
+	@PostMapping("/public/employee/recovery/login-id/request")
+	public ResponseEntity<?> requestEmployeeLoginId(@RequestBody EmployeeFindIdRequest request) {
+		try {
+			return ResponseEntity.ok(Map.of("requestId", employeeAccountRecoveryService.requestLoginId(request)));
+		} catch (IllegalArgumentException e) {
+			return ResponseEntity.badRequest().body(e.getMessage());
+		}
+	}
+
+	@Operation(summary="직원 비밀번호 찾기 인증번호 발송", description="직원 아이디와 일치하는 계정의 이메일로 인증번호를 발송합니다.")
+	@ApiResponse(responseCode="200", description="인증번호 발송 성공")
+	@PostMapping("/public/employee/recovery/password/request")
+	public ResponseEntity<?> requestEmployeePasswordReset(@RequestBody EmployeeFindPasswordRequest request) {
+		try {
+			return ResponseEntity.ok(Map.of("requestId", employeeAccountRecoveryService.requestPasswordReset(request)));
+		} catch (IllegalArgumentException e) {
+			return ResponseEntity.badRequest().body(e.getMessage());
+		}
+	}
+
+	@Operation(summary="직원 계정 찾기 인증번호 확인", description="이메일로 받은 일회성 인증번호를 확인합니다.")
+	@ApiResponse(responseCode="200", description="인증 성공")
+	@PostMapping("/public/employee/recovery/verify")
+	public ResponseEntity<?> verifyEmployeeRecovery(@RequestBody EmployeeRecoveryVerifyRequest request) {
+		try {
+			EmployeeAccountRecoveryService.RecoveryVerification verification =
+					employeeAccountRecoveryService.verifyCode(request);
+			return ResponseEntity.ok(Map.of(
+					"loginId", verification.loginId() == null ? "" : verification.loginId(),
+					"resetToken", verification.resetToken() == null ? "" : verification.resetToken()));
+		} catch (IllegalArgumentException e) {
+			return ResponseEntity.badRequest().body(e.getMessage());
+		}
+	}
+
+	@Operation(summary="직원 비밀번호 재설정", description="인증이 완료된 직원 계정의 비밀번호를 변경합니다.")
+	@ApiResponse(responseCode="200", description="비밀번호 변경 성공")
+	@PostMapping("/public/employee/recovery/password/reset")
+	public ResponseEntity<?> resetEmployeePassword(@RequestBody EmployeePasswordResetRequest request) {
+		try {
+			employeeAccountRecoveryService.resetPassword(request);
+			return ResponseEntity.ok(Map.of("message", "비밀번호가 변경되었습니다."));
 		} catch (IllegalArgumentException e) {
 			return ResponseEntity.badRequest().body(e.getMessage());
 		}

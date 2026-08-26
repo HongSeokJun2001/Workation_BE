@@ -5,6 +5,9 @@ import java.util.List;
 import com.kh.workation.member.model.dto.AdminDetailResponse;
 import com.kh.workation.member.model.dto.AdminListResponse;
 import com.kh.workation.member.model.dto.AdminUpdateRequest;
+import com.kh.workation.member.model.dto.CompanyAdminCreateRequest;
+import com.kh.workation.member.model.dto.SuperAdminCreateRequest;
+import com.kh.workation.member.model.vo.Company;
 import com.kh.workation.member.model.dto.EmployeeDetailResponse;
 import com.kh.workation.member.model.dto.EmployeeSignupRequest;
 import com.kh.workation.member.model.dto.EmployeeUpdateRequest;
@@ -16,6 +19,8 @@ public interface MemberService {
     List<AdminListResponse> selectAdminList(String status, String target);
 
     List<AdminListResponse> selectCompanyAdminList(String status, Long companyId);
+
+    List<Company> selectActiveCompanyList();
 
     List<Employee> selectEmployeeList(String status, String isProgressed, Long companyId);
 
@@ -30,6 +35,12 @@ public interface MemberService {
     AdminDetailResponse updateAdmin(Long adminId, AdminUpdateRequest request);
 
     AdminDetailResponse updateCompanyAdmin(Long adminId, Long companyId, AdminUpdateRequest request);
+
+    AdminDetailResponse createCompanyAdmin(Long companyId, CompanyAdminCreateRequest request);
+
+    AdminDetailResponse createCompanyAdminBySuper(CompanyAdminCreateRequest request);
+
+    AdminDetailResponse createSuperAdmin(SuperAdminCreateRequest request);
 
     EmployeeDetailResponse updateEmployee(Long employeeId, Long companyId, EmployeeUpdateRequest request);
 
