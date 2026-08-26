@@ -24,7 +24,7 @@ import lombok.Setter;
 import lombok.ToString;
 
 
-//@Entity
+@Entity
 @Table(name="REPLY")
 
 @DynamicInsert
@@ -40,7 +40,7 @@ public class Reply { // 댓글 수정은 없는지 ?
 	@Id
 	@Column(name="REPLY_ID")
 	@GeneratedValue(strategy=GenerationType.IDENTITY)
-	private int replyId;
+	private Integer replyId;
 	
 	
 	@JoinColumn(name="CREW_ID")

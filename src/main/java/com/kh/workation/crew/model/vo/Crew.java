@@ -39,7 +39,7 @@ public class Crew {
 	@Id
 	@Column(name="CREW_ID")
 	@GeneratedValue(strategy=GenerationType.IDENTITY)
-	private int crewId; // 쿠르ID(PK)
+	private Integer crewId; // 쿠르ID(PK)
 	
 	@JoinColumn(name="COMPANY_ID")
 	@ManyToOne(fetch = FetchType.LAZY)
@@ -52,7 +52,7 @@ public class Crew {
 	@Column(name="CREW_NAME", nullable=false)
 	private String crewName;	//크루명
 	
-	@Column(name="CREW_CONTENT", length=500)
+	@Column(name="CREW_CONTENT", length=800)
 	private String crewContent;		//소개내용
 	
 	@Column(name="STATUS", nullable=false, columnDefinition="VARCHAR(20) DEFAULT 'Y'")
@@ -66,7 +66,7 @@ public class Crew {
 	private LocalDateTime endDate; //마감일
 	
 	@Column(name="CAPACITY", nullable=false, columnDefinition="INT DEFAULT 0")
-	private int capacity; //정원 
+	private Integer capacity; //정원 
 	
 	
 	
