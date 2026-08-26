@@ -18,6 +18,8 @@ import com.kh.workation.auth.model.service.AuthService;
 import com.kh.workation.member.model.dto.AdminDetailResponse;
 import com.kh.workation.member.model.dto.AdminListResponse;
 import com.kh.workation.member.model.dto.AdminUpdateRequest;
+import com.kh.workation.member.model.dto.CompanyAdminCreateRequest;
+import com.kh.workation.member.model.dto.SuperAdminCreateRequest;
 import com.kh.workation.member.model.dto.EmployeeDetailResponse;
 import com.kh.workation.member.model.dto.EmployeeFindIdRequest;
 import com.kh.workation.member.model.dto.EmployeeFindPasswordRequest;
@@ -26,6 +28,7 @@ import com.kh.workation.member.model.dto.EmployeeRecoveryVerifyRequest;
 import com.kh.workation.member.model.dto.EmployeeSignupRequest;
 import com.kh.workation.member.model.dto.EmployeeUpdateRequest;
 import com.kh.workation.member.model.vo.Employee;
+import com.kh.workation.member.model.vo.Company;
 import com.kh.workation.member.model.service.EmployeeAccountRecoveryService;
 import com.kh.workation.member.model.service.MemberService;
 
@@ -56,6 +59,13 @@ public class MemberController {
 			@RequestParam(defaultValue = "ALL") String status,
 			@RequestParam(defaultValue = "ALL") String target) {
 		return ResponseEntity.ok(memberService.selectAdminList(status, target));
+	}
+
+	@Operation(summary="회사 목록 조회", description="최고관리자가 본사관리자 생성 시 선택할 수 있는 회사 목록을 조회합니다.")
+	@ApiResponse(responseCode="200", description="조회 성공")
+	@GetMapping("/admin/super/company-list")
+	public ResponseEntity<List<Company>> selectActiveCompanyList() {
+		return ResponseEntity.ok(memberService.selectActiveCompanyList());
 	}
 
 	@Operation(summary="본사관리자 목록 조회", description="ADMIN 테이블에서 본사관리자 목록만 조회합니다.")
@@ -135,6 +145,17 @@ public class MemberController {
 		}
 	}
 
+	@Operation(summary="최고관리자 계정 생성", description="최고관리자 권한의 관리자 계정을 생성합니다.")
+	@ApiResponse(responseCode="200", description="생성 성공")
+	@PostMapping("/admin/super/member/admin")
+	public ResponseEntity<?> createSuperAdmin(@RequestBody SuperAdminCreateRequest request) {
+		try {
+			return ResponseEntity.ok(memberService.createSuperAdmin(request));
+		} catch (IllegalArgumentException e) {
+			return ResponseEntity.badRequest().body(e.getMessage());
+		}
+	}
+
 	@Operation(summary="본사관리자용 관리자 계정 수정", description="본사관리자가 같은 회사의 본사관리자 계정을 수정합니다.")
 	@ApiResponse(responseCode="200", description="수정 성공")
 	@PutMapping("/admin/company/member/admin/{adminId}")
@@ -144,6 +165,30 @@ public class MemberController {
 			HttpServletRequest httpRequest) {
 		try {
 			return ResponseEntity.ok(memberService.updateCompanyAdmin(adminId, getCompanyId(httpRequest), request));
+		} catch (IllegalArgumentException e) {
+			return ResponseEntity.badRequest().body(e.getMessage());
+		}
+	}
+
+	@Operation(summary="본사관리자 계정 생성", description="현재 본사관리자와 같은 회사의 본사관리자 계정을 생성합니다.")
+	@ApiResponse(responseCode="200", description="생성 성공")
+	@PostMapping("/admin/company/member/admin")
+	public ResponseEntity<?> createCompanyAdmin(
+			@RequestBody CompanyAdminCreateRequest request,
+			HttpServletRequest httpRequest) {
+		try {
+			return ResponseEntity.ok(memberService.createCompanyAdmin(getCompanyId(httpRequest), request));
+		} catch (IllegalArgumentException e) {
+			return ResponseEntity.badRequest().body(e.getMessage());
+		}
+	}
+
+	@Operation(summary="최고관리자의 본사관리자 계정 생성", description="최고관리자가 선택한 회사 소속의 본사관리자 계정을 생성합니다.")
+	@ApiResponse(responseCode="200", description="생성 성공")
+	@PostMapping("/admin/super/member/company-admin")
+	public ResponseEntity<?> createCompanyAdminBySuper(@RequestBody CompanyAdminCreateRequest request) {
+		try {
+			return ResponseEntity.ok(memberService.createCompanyAdminBySuper(request));
 		} catch (IllegalArgumentException e) {
 			return ResponseEntity.badRequest().body(e.getMessage());
 		}

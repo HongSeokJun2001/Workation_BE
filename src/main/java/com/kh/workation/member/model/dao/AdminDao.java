@@ -8,6 +8,8 @@ import com.kh.workation.member.model.vo.Admin;
 
 public interface AdminDao extends JpaRepository<Admin, Long> {
 
+    boolean existsByLoginId(String loginId);
+
     List<Admin> findByRole(String role);
 
     List<Admin> findByRoleAndStatus(String role, String status);
