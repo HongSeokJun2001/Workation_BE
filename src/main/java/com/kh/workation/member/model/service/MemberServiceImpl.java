@@ -7,6 +7,8 @@ import java.util.regex.Pattern;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -72,6 +74,29 @@ public class MemberServiceImpl implements MemberService {
 				status));
 	}
 
+	@Override
+	@Transactional(readOnly = true)
+	public Page<AdminListResponse> selectAdminPage(String status, String target, Pageable pageable) {
+		List<String> roles = Arrays.asList(Admin.ROLE_SUPER_ADMIN, Admin.ROLE_COMPANY_ADMIN);
+		Page<Admin> page;
+
+		if ("SUPER".equalsIgnoreCase(target)) {
+			page = isAllStatus(status)
+					? adminDao.findByRole(Admin.ROLE_SUPER_ADMIN, pageable)
+					: adminDao.findByRoleAndStatus(Admin.ROLE_SUPER_ADMIN, status, pageable);
+		} else if ("COMPANY".equalsIgnoreCase(target)) {
+			page = isAllStatus(status)
+					? adminDao.findByRole(Admin.ROLE_COMPANY_ADMIN, pageable)
+					: adminDao.findByRoleAndStatus(Admin.ROLE_COMPANY_ADMIN, status, pageable);
+		} else {
+			page = isAllStatus(status)
+					? adminDao.findByRoleIn(roles, pageable)
+					: adminDao.findByRoleInAndStatus(roles, status, pageable);
+		}
+
+		return page.map(admin -> AdminListResponse.from(admin, findCompanyName(admin.getCompanyId())));
+	}
+
 	// ADMIN 테이블에서 본사관리자만 조회한다.
 	@Override
 	@Transactional(readOnly = true)
@@ -81,6 +106,16 @@ public class MemberServiceImpl implements MemberService {
 		}
 
 		return toAdminListResponse(adminDao.findByCompanyIdAndRoleAndStatus(companyId, Admin.ROLE_COMPANY_ADMIN, status));
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public Page<AdminListResponse> selectCompanyAdminPage(String status, Long companyId, Pageable pageable) {
+		Page<Admin> page = isAllStatus(status)
+				? adminDao.findByCompanyIdAndRole(companyId, Admin.ROLE_COMPANY_ADMIN, pageable)
+				: adminDao.findByCompanyIdAndRoleAndStatus(companyId, Admin.ROLE_COMPANY_ADMIN, status, pageable);
+
+		return page.map(admin -> AdminListResponse.from(admin, findCompanyName(admin.getCompanyId())));
 	}
 
 	@Override
@@ -104,6 +139,24 @@ public class MemberServiceImpl implements MemberService {
 		return employees.stream()
 				.filter(employee -> isProgressed.equalsIgnoreCase(employee.getIsProgressed()))
 				.toList();
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public Page<Employee> selectEmployeePage(String status, String isProgressed, Long companyId, Pageable pageable) {
+		boolean allStatus = isAllStatus(status);
+		boolean allProgressed = isAllProgressed(isProgressed);
+
+		if (allStatus && allProgressed) {
+			return employeeDao.findByCompanyId(companyId, pageable);
+		}
+		if (allProgressed) {
+			return employeeDao.findByCompanyIdAndStatus(companyId, status, pageable);
+		}
+		if (allStatus) {
+			return employeeDao.findByCompanyIdAndIsProgressed(companyId, isProgressed, pageable);
+		}
+		return employeeDao.findByCompanyIdAndStatusAndIsProgressed(companyId, status, isProgressed, pageable);
 	}
 
 	@Override
