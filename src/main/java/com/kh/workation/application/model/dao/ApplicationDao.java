@@ -9,6 +9,6 @@ import com.kh.workation.application.model.vo.Application;
 
 public interface ApplicationDao extends JpaRepository<Application, Integer> {
 
-	Page<Application> findByProgressStatusOrderByWorkationIdDesc(String status, Pageable pageable);
+	//Page<Application> findByProgressStatusOrderByWorkationIdDesc(String status, Pageable pageable);
 	
 }

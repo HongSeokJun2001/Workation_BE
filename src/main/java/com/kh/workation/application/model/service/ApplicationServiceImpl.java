@@ -14,9 +14,9 @@ public class ApplicationServiceImpl implements ApplicationService{
 	@Autowired
 	private ApplicationDao applicationDao;
 	
-	public Page<Application> selectApplicationList(Pageable pageable) {
-		
-		return applicationDao.findByProgressStatusOrderByWorkationIdDesc("APPLY", pageable);
-	}
+//	public Page<Application> selectApplicationList(Pageable pageable) {
+//		
+//		return applicationDao.findByProgressStatusOrderByWorkationIdDesc("APPLY", pageable);
+//	}
 	
 }

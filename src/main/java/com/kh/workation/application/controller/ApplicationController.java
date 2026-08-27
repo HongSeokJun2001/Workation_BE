@@ -26,30 +26,30 @@ public class ApplicationController {
 	@Autowired
 	private ApplicationService applicationService;
 
-	@GetMapping("/applicationList")
-	public ResponseEntity<HashMap<String, Object>> selectApplicationList(
-			@RequestParam(value="cpage", defaultValue="1") int currentPage){
-		
-		int pageLimit = 10;
-		int boardLimit = 10;
-		
-		Pageable pageable = PageRequest.of(currentPage - 1, boardLimit);
-		
-		Page<Application> page = applicationService.selectApplicationList(pageable);
-		
-		List<Application> list = page.getContent();
-		
-		long listCount = page.getTotalElements();
-		
-		PageInfo pi = Pagination.getPageInfo((int)listCount, currentPage, 
-				pageLimit, boardLimit);
-		
-		HashMap<String, Object> hm = new HashMap<>();
-		
-		hm.put("pi", pi);
-		hm.put("list", list);
-		
-		return ResponseEntity.status(HttpStatus.OK)
-				 .body(hm);
-	}
+//	@GetMapping("/applicationList")
+//	public ResponseEntity<HashMap<String, Object>> selectApplicationList(
+//			@RequestParam(value="cpage", defaultValue="1") int currentPage){
+//		
+//		int pageLimit = 10;
+//		int boardLimit = 10;
+//		
+//		Pageable pageable = PageRequest.of(currentPage - 1, boardLimit);
+//		
+//		Page<Application> page = applicationService.selectApplicationList(pageable);
+//		
+//		List<Application> list = page.getContent();
+//		
+//		long listCount = page.getTotalElements();
+//		
+//		PageInfo pi = Pagination.getPageInfo((int)listCount, currentPage, 
+//				pageLimit, boardLimit);
+//		
+//		HashMap<String, Object> hm = new HashMap<>();
+//		
+//		hm.put("pi", pi);
+//		hm.put("list", list);
+//		
+//		return ResponseEntity.status(HttpStatus.OK)
+//				 .body(hm);
+//	}
 }

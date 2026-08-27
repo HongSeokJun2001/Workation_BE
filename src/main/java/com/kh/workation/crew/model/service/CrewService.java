@@ -1,5 +1,6 @@
 package com.kh.workation.crew.model.service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
@@ -11,7 +12,7 @@ import com.kh.workation.reply.model.vo.Reply;
 public interface CrewService {
 	
 	// 크루 리스트 조
-	Page<Crew> selectCrewList(Pageable pageable);
+	ArrayList<Crew> selectCrewList();
 	
 	// 크루 등록
 	Crew inserCrew(Crew c);

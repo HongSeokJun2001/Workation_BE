@@ -7,6 +7,6 @@ import com.kh.workation.application.model.vo.Application;
 
 public interface ApplicationService {
 	
-	Page<Application> selectApplicationList(Pageable pageable);
+	//Page<Application> selectApplicationList(Pageable pageable);
 	
 }
