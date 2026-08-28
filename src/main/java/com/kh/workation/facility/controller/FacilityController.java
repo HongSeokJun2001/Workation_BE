@@ -143,7 +143,6 @@ public class FacilityController {
 	@GetMapping("/facilities/all")
 	public ResponseEntity<List<FacilityResponseDto>> getAllFacilities() {
 	    List<FacilityResponseDto> list = facilityService.getAllFacilities();
-	    System.out.println("🔥 DB 조회 결과 = " + list);
 	    return ResponseEntity.ok(list);
 	}
 }
