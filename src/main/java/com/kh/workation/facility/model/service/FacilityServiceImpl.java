@@ -2,7 +2,9 @@ package com.kh.workation.facility.model.service;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -181,5 +183,14 @@ public class FacilityServiceImpl implements FacilityService{
 	}
 	
 	
-	
+	// * 시설 전체 리스트 조회 (워케이션신청용)
+	@Override
+	@Transactional(readOnly = true)
+	public List<FacilityResponseDto> getAllFacilities() {
+	    List<Facility> facilityList = facilityDao.findAll();
+	    
+	    return facilityList.stream()
+	            .map(FacilityResponseDto::fromEntity)
+	            .collect(Collectors.toList());
+	}
 }

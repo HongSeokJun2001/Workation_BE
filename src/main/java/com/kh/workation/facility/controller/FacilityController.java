@@ -138,5 +138,13 @@ public class FacilityController {
 		
 		return ResponseEntity.ok(deletedId);
 	}
+	
+	// * 시설 전체 리스트 조회 (워케이션신청용)
+	@GetMapping("/facilities/all")
+	public ResponseEntity<List<FacilityResponseDto>> getAllFacilities() {
+	    List<FacilityResponseDto> list = facilityService.getAllFacilities();
+	    System.out.println("🔥 DB 조회 결과 = " + list);
+	    return ResponseEntity.ok(list);
+	}
 }
 

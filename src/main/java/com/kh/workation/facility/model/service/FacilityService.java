@@ -1,5 +1,7 @@
 package com.kh.workation.facility.model.service;
 
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
@@ -27,4 +29,7 @@ public interface FacilityService {
 	
 	// 6. 시설 삭제
 	Long deleteFacility(Long facility);
+	
+	// * 시설 전체 리스트 조회 (워케이션신청용)
+	List<FacilityResponseDto> getAllFacilities();
 }
