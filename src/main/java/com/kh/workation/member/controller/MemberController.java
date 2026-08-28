@@ -3,7 +3,6 @@ package com.kh.workation.member.controller;
 import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -326,6 +325,8 @@ public class MemberController {
 		}
 	}
 
+	@Operation(summary="페이지 응답 생성", description="페이지 정보를 포함한 응답을 생성합니다.")
+	@ApiResponse(responseCode="200", description="페이지 응답 생성 성공")
 	private Map<String, Object> pageResponse(Page<?> page, int currentPage, int listLimit) {
 		int safeCurrentPage = Math.max(currentPage, 1);
 		PageInfo pageInfo = Pagination.getPageInfo(
@@ -336,15 +337,20 @@ public class MemberController {
 		return response;
 	}
 
+	@Operation(summary="회사 ID 조회", description="요청 헤더의 토큰에서 회사 ID를 추출합니다.")
+	@ApiResponse(responseCode="200", description="회사 ID 조회 성공")
 	private Long getCompanyId(HttpServletRequest request) {
 		String authorization = request.getHeader("Authorization");
 		String token = authorization.substring(7);
 		return authService.getCompanyId(token);
 	}
 
+	@Operation(summary="로그인 ID 조회", description="요청 헤더의 토큰에서 로그인 ID를 추출합니다.")
+	@ApiResponse(responseCode="200", description="로그인 ID 조회 성공")
 	private String getLoginId(HttpServletRequest request) {
 		String authorization = request.getHeader("Authorization");
 		String token = authorization.substring(7);
 		return authService.getLoginId(token);
 	}
+
 }

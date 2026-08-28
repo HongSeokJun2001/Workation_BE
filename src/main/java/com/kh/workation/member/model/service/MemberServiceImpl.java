@@ -464,4 +464,5 @@ public class MemberServiceImpl implements MemberService {
 				.map(Company::getCompanyName)
 				.orElse(null);
 	}
+
 }
