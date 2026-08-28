@@ -1,5 +1,6 @@
 package com.kh.workation.crew.model.vo;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import org.hibernate.annotations.DynamicInsert;
@@ -63,7 +64,7 @@ public class Crew {
 	private LocalDateTime createDate;	//생성일
 	
 	@Column(name="END_DATE")
-	private LocalDateTime endDate; //마감일
+	private LocalDate endDate; //마감일
 	
 	@Column(name="CAPACITY", nullable=false, columnDefinition="INT DEFAULT 0")
 	private Integer capacity; //정원 
