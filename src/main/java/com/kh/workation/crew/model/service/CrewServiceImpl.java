@@ -1,12 +1,12 @@
 package com.kh.workation.crew.model.service;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.kh.workation.crew.model.dao.CrewDao;
 import com.kh.workation.crew.model.vo.Crew;
@@ -19,15 +19,21 @@ public class CrewServiceImpl implements CrewService{
 	private CrewDao crewDao;
 	
 	@Override
-	public ArrayList<Crew> selectCrewList() {
+	public Page<Crew> selectCrewList(Pageable pageable) {
 		
-		return (ArrayList)crewDao.findAll();
+		return crewDao.findByStatusOrderByCrewIdDesc("Y", pageable);
 	}
-
+	
+	public Page<Crew> searchCrewList(String keyword, Pageable pageable){
+		return crewDao.findByCrewNameContainingAndStatusOrderByCrewIdDesc(keyword,"Y", pageable);
+	}
+	
+	@Transactional
 	@Override
-	public Crew inserCrew(Crew c) {
-		// TODO Auto-generated method stub
-		return null;
+	public Crew insertCrew(Crew c) {
+		
+		return crewDao.save(c);
+		
 	}
 
 	@Override

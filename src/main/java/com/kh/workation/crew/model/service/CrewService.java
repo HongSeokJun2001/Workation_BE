@@ -12,10 +12,13 @@ import com.kh.workation.reply.model.vo.Reply;
 public interface CrewService {
 	
 	// 크루 리스트 조
-	ArrayList<Crew> selectCrewList();
+	Page<Crew> selectCrewList(Pageable pageable);
+	
+	// 크루 검색
+	Page<Crew> searchCrewList(String keyword, Pageable pageable);
 	
 	// 크루 등록
-	Crew inserCrew(Crew c);
+	Crew insertCrew(Crew c);
 	
 	// 크루 수정
 	
