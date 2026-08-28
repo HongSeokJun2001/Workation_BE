@@ -13,15 +13,47 @@ import com.kh.workation.facility.model.vo.Facility;
 @Repository
 public interface FacilityDao extends JpaRepository<Facility, Long> {
 
-	// 1. 전체 시설 페이징 조회 (imageList를 한번에 패치 조인하여 N+1 문제 방지,  내림차순 정렬) 
-	@EntityGraph(attributePaths = {"imageList"})
-	@Query("SELECT f FROM Facility f WHERE f.status = 'ACTIVE' ORDER BY f.createdDate DESC")
-	Page<Facility> findAllFacilities(Pageable pageable);
-	
-	// 2. 시설 검색 페이징 조회 (시설명 또는 지역 검색 + imageList 패치 조인)
-	@EntityGraph(attributePaths = {"imageList"})
-	@Query("SELECT f FROM Facility f WHERE f.status = 'ACTIVE' AND (f.facilityName LIKE %:keyword% OR f.region LIKE %:keyword%)")
-	Page<Facility> searchActiveFacilities(@Param("keyword") String keyword, Pageable pageable);
-	
-	// 
+	// ================= [일반 사용자 / 비로그인 전용 (ACTIVE)] =================
+
+		// 1. ACTIVE 목록 - 최신순 (createdDate DESC)
+		@EntityGraph(attributePaths = {"imageList"})
+		@Query("SELECT f FROM Facility f WHERE f.status = 'ACTIVE' ORDER BY f.createdDate DESC")
+		Page<Facility> findAllActiveFacilitiesDesc(Pageable pageable);
+
+		// 2. ACTIVE 목록 - 오래된순 (createdDate ASC)
+		@EntityGraph(attributePaths = {"imageList"})
+		@Query("SELECT f FROM Facility f WHERE f.status = 'ACTIVE' ORDER BY f.createdDate ASC")
+		Page<Facility> findAllActiveFacilitiesAsc(Pageable pageable);
+
+		// 3. ACTIVE 검색 - 최신순 (createdDate DESC)
+		@EntityGraph(attributePaths = {"imageList"})
+		@Query("SELECT f FROM Facility f WHERE f.status = 'ACTIVE' AND (f.facilityName LIKE %:keyword% OR f.region LIKE %:keyword%) ORDER BY f.createdDate DESC")
+		Page<Facility> searchActiveFacilitiesDesc(@Param("keyword") String keyword, Pageable pageable);
+
+		// 4. ACTIVE 검색 - 오래된순 (createdDate ASC)
+		@EntityGraph(attributePaths = {"imageList"})
+		@Query("SELECT f FROM Facility f WHERE f.status = 'ACTIVE' AND (f.facilityName LIKE %:keyword% OR f.region LIKE %:keyword%) ORDER BY f.createdDate ASC")
+		Page<Facility> searchActiveFacilitiesAsc(@Param("keyword") String keyword, Pageable pageable);
+
+		// ================= [최고관리자 전용 (전체 상태)] =================
+
+		// 5. 전체 목록 - 최신순 (createdDate DESC)
+		@EntityGraph(attributePaths = {"imageList"})
+		@Query("SELECT f FROM Facility f ORDER BY f.createdDate DESC")
+		Page<Facility> findAllFacilitiesForAdminDesc(Pageable pageable);
+
+		// 6. 전체 목록 - 오래된순 (createdDate ASC)
+		@EntityGraph(attributePaths = {"imageList"})
+		@Query("SELECT f FROM Facility f ORDER BY f.createdDate ASC")
+		Page<Facility> findAllFacilitiesForAdminAsc(Pageable pageable);
+
+		// 7. 전체 검색 - 최신순 (createdDate DESC)
+		@EntityGraph(attributePaths = {"imageList"})
+		@Query("SELECT f FROM Facility f WHERE f.facilityName LIKE %:keyword% OR f.region LIKE %:keyword% ORDER BY f.createdDate DESC")
+		Page<Facility> searchFacilitiesForAdminDesc(@Param("keyword") String keyword, Pageable pageable);
+
+		// 8. 전체 검색 - 오래된순 (createdDate ASC)
+		@EntityGraph(attributePaths = {"imageList"})
+		@Query("SELECT f FROM Facility f WHERE f.facilityName LIKE %:keyword% OR f.region LIKE %:keyword% ORDER BY f.createdDate ASC")
+		Page<Facility> searchFacilitiesForAdminAsc(@Param("keyword") String keyword, Pageable pageable);
 }
