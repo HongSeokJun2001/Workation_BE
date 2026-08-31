@@ -50,7 +50,7 @@ public class FacilityController {
 	private final FacilityService facilityService;
 	
 	// 시설 목록 조회
-	@Operation(summary = "시설 목록 조회", description = "페이징 및 정렬 조건에 따라 시설 목록을 조회합니다. 토큰 유무에 따라 조회범위가 달라집니다.")
+	@Operation(summary = "시설 목록 조회", description = "페이징 및 정렬, 지역 조건에 따라 시설 목록을 조회합니다. 토큰 유무에 따라 조회범위가 달라집니다.")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "200", description = "시설 목록 조회 성공")
 	})
@@ -59,10 +59,12 @@ public class FacilityController {
 																   @RequestParam(value="cpage", defaultValue="1") int currentPage,
 																   @Parameter(description = "정렬 기준 (LATEST 등)", example = "LATEST")
 																   @RequestParam(value="sort", defaultValue="LATEST") String sort,
+																   @Parameter(description = "지역 필터 조건 (ALL, 서울, 경기, 강원, 제주 등)", example = "강원")
+																   @RequestParam(value="region", defaultValue="ALL") String region,
 																   @Parameter(description = "인증 토큰", example = "Bearer eyJhbGci...")
 																   @RequestHeader(value="Authorization", required = false) String token) {
 		
-		log.info("시설 목록 조회 요청 - cpage: {}, sort: {}, token 존재 여부 : {}", currentPage, sort, token != null);
+		log.info("시설 목록 조회 요청 - cpage: {}, sort: {}, region: {}, token 존재 여부 : {}", currentPage, sort, token != null);
 		
 		int listLimit = 9; // 한 페이지당 출력할 시설 수
 		int pageLimit = 5; // 하단 페이징바 번호 개수
@@ -71,7 +73,7 @@ public class FacilityController {
 		Pageable pageable = PageRequest.of(currentPage - 1, listLimit);
 		
 		// 서비스 호출 (Page<FacilityResponseDto> 형태로 변환)
-		Page<FacilityResponseDto> page = facilityService.getFacilityList(pageable, sort, token);
+		Page<FacilityResponseDto> page = facilityService.getFacilityList(pageable, sort, region, token);
 		
 		List<FacilityResponseDto> list = page.getContent();
 		long listCount = page.getTotalElements();
@@ -99,16 +101,18 @@ public class FacilityController {
 																	  @RequestParam(value="keyword", defaultValue="") String keyword,
 																	  @Parameter(description = "정렬 기준", example = "LATEST")
 																	  @RequestParam(value="sort", defaultValue="LATEST") String sort,
+																	  @Parameter(description = "지역 필터 조건 (ALL, 서울, 경기, 강원, 제주 등)", example = "ALL")
+																	  @RequestParam(value="region", defaultValue="ALL") String region,
 																	  @Parameter(description = "인증 토큰", example = "Bearer eyJhGci...")
 																	  @RequestHeader(value = "Authorization", required = false) String token) {
-		log.info("시설 검색 요청 - cpage: {}, keyword: {}, sort: {}", currentPage, keyword, sort);
+		log.info("시설 검색 요청 - cpage: {}, keyword: {}, sort: {}, region: {}", currentPage, keyword, sort, region);
 		
 		int listLimit = 9;
 		int pageLimit = 5;
 		
 		Pageable pageable = PageRequest.of(currentPage - 1, listLimit);
 		
-		Page<FacilityResponseDto> page = facilityService.searchFacilityList(keyword, pageable, sort, token);
+		Page<FacilityResponseDto> page = facilityService.searchFacilityList(keyword, pageable, sort, region, token);
 		
 		List<FacilityResponseDto> list = page.getContent();
 		long searchCount = page.getTotalElements();

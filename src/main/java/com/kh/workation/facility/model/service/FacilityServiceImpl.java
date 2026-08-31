@@ -44,18 +44,18 @@ public class FacilityServiceImpl implements FacilityService{
 
 	// 1. 전체 시설 목록 조회
 	@Override
-	public Page<FacilityResponseDto> getFacilityList(Pageable pageable, String sort, String token) {
+	public Page<FacilityResponseDto> getFacilityList(Pageable pageable, String sort, String region, String token) {
 		Page<Facility> facilityPage;
 		boolean isOldest = "OLDEST".equalsIgnoreCase(sort);
 		
 		if(isSuperAdmin(token)) {
 			// 최고관리자: ACTIVE + INACTIVE 전체 조회
-			facilityPage = isOldest ? facilityDao.findAllFacilitiesForAdminAsc(pageable)
-									: facilityDao.findAllFacilitiesForAdminDesc(pageable);
+			facilityPage = isOldest ? facilityDao.findAllFacilitiesForAdminAsc(region, pageable)
+									: facilityDao.findAllFacilitiesForAdminDesc(region, pageable);
 		} else {
 			// 일반사용자 / 비로그인: ACITVE 상태만 조회
-			facilityPage = isOldest ? facilityDao.findAllActiveFacilitiesAsc(pageable)
-									: facilityDao.findAllActiveFacilitiesDesc(pageable);
+			facilityPage = isOldest ? facilityDao.findAllActiveFacilitiesAsc(region, pageable)
+									: facilityDao.findAllActiveFacilitiesDesc(region, pageable);
 		}
 		
 		return facilityPage.map(FacilityResponseDto::fromEntity);
@@ -63,17 +63,17 @@ public class FacilityServiceImpl implements FacilityService{
 
 	// 2. 시설 목록 검색
 	@Override
-	public Page<FacilityResponseDto> searchFacilityList(String keyword, Pageable pageable, String sort, String token) {
+	public Page<FacilityResponseDto> searchFacilityList(String keyword, Pageable pageable, String sort, String region, String token) {
 		Page<Facility> facilityPage;
 		boolean isOldest = "OLDEST".equalsIgnoreCase(sort);
 		if(isSuperAdmin(token)) {
 			// 최고관리자:전체 상태 대상 검색
-			facilityPage = isOldest ? facilityDao.searchFacilitiesForAdminAsc(keyword,pageable)
-									: facilityDao.searchFacilitiesForAdminDesc(keyword,pageable);
+			facilityPage = isOldest ? facilityDao.searchFacilitiesForAdminAsc(keyword, region, pageable)
+									: facilityDao.searchFacilitiesForAdminDesc(keyword, region, pageable);
 		} else {
 			//일반 사용자 / 비로그인: ACTIVE 상태만 검색
-			facilityPage = isOldest ? facilityDao.searchActiveFacilitiesAsc(keyword, pageable)
-									: facilityDao.searchActiveFacilitiesDesc(keyword, pageable);
+			facilityPage = isOldest ? facilityDao.searchActiveFacilitiesAsc(keyword, region,  pageable)
+									: facilityDao.searchActiveFacilitiesDesc(keyword, region,  pageable);
 		}
 		return facilityPage.map(FacilityResponseDto::fromEntity);
 	}
