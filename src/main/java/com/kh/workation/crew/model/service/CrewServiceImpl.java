@@ -71,5 +71,13 @@ public class CrewServiceImpl implements CrewService{
 		// TODO Auto-generated method stub
 		return 0;
 	}
+	
+	
+	@Override
+	@Transactional(readOnly = true)
+	public List<Crew> getLeaderCrews(String loginId) {
+		
+		return crewDao.findByEmployeeLoginId(loginId);
+	}
 
 }

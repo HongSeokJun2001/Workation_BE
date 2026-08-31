@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.kh.workation.application.model.dao.ApplicationDao;
 import com.kh.workation.application.model.dao.ApprovalDao;
 import com.kh.workation.application.model.dao.ProgressDao;
+import com.kh.workation.application.model.dto.ApplicationDetail;
 import com.kh.workation.application.model.vo.Application;
 import com.kh.workation.application.model.vo.Approval;
 import com.kh.workation.application.model.vo.Progress;
@@ -32,19 +33,25 @@ public class ApplicationServiceImpl implements ApplicationService{
     private ProgressDao progressDao;
 	
 	@Override
+	@Transactional(readOnly = true)
 	public Page<Application> getApplicationList(Pageable pageable) {
 		
-		return applicationDao.findByProgressStatusOrderByWorkationIdDesc("APPLY", pageable);
+		return applicationDao.findByProgressStatus("APPLY", pageable);
 	}
 	
 	@Override
-    @Transactional // 4개 저장 작업 중 하나라도 실패 시 전체 롤백
+	@Transactional(readOnly = true)
+	public ApplicationDetail getApplicationDetail(int applicationId) {
+		
+		Application application = applicationDao.findByWorkationId(applicationId)
+	            .orElseThrow(() -> new IllegalArgumentException("해당 신청 내역을 찾을 수 없습니다. id=" + applicationId));
+		
+		return new ApplicationDetail(application);
+	}
+	
+	@Override
+	@Transactional
     public Application insertApplication(Application a) {
-        
-        // 0. (로그인 전 임시) DB에 존재하는 1번 Company 세팅 (NotNull 에러 방지)
-        Company dummyCompany = new Company();
-        dummyCompany.setCompanyId(1L); 
-        a.setCompany(dummyCompany);
 
         // ReservationDate(예약날짜)
         if (a.getReservationDate() != null) {
@@ -54,12 +61,6 @@ public class ApplicationServiceImpl implements ApplicationService{
 
         // Application(신청 정보)
         Application savedApp = applicationDao.save(a);
-
-        // Approval(승인/결재)
-        Approval approval = new Approval();
-        approval.setWorkationId(savedApp.getWorkationId()); 
-        approval.setApprovedYn("PENDING");
-        approvalDao.save(approval);
 
         // Progress(진행상태)
         Progress progress = new Progress();
