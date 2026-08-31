@@ -2,7 +2,9 @@ package com.kh.workation.facility.model.service;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -10,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.kh.workation.auth.model.service.AuthService;
 import com.kh.workation.facility.model.dao.FacilityDao;
 import com.kh.workation.facility.model.dto.FacilityRequestDto;
 import com.kh.workation.facility.model.dto.FacilityResponseDto;
@@ -25,21 +28,53 @@ import lombok.RequiredArgsConstructor;
 public class FacilityServiceImpl implements FacilityService{
 
 	private final FacilityDao facilityDao;
+	private final AuthService authService;	
+	
+	// 토큰에서 최고관리자(SUPER) 여부 판단 헬퍼 메서드
+	private boolean isSuperAdmin(String token) {
+		if(token == null || !token.startsWith("Bearer")) {
+			return false;
+		}
+		// "Bearer" 제거 후 토큰 파싱
+		String rawToken = token.substring(7);
+		
+		// AuthService의 isSuperAdminToken 메서드 호출
+		return authService.isSuperAdminToken(rawToken);
+	}
 
 	// 1. 전체 시설 목록 조회
 	@Override
-	public Page<FacilityResponseDto> getFacilityList(Pageable pageable) {
-		Page<Facility> facilityPage = facilityDao.findAllFacilities(pageable);
+	public Page<FacilityResponseDto> getFacilityList(Pageable pageable, String sort, String token) {
+		Page<Facility> facilityPage;
+		boolean isOldest = "OLDEST".equalsIgnoreCase(sort);
 		
-		// Page<Facility> -> Page<FacilityResponseDto> 자동 매핑
+		if(isSuperAdmin(token)) {
+			// 최고관리자: ACTIVE + INACTIVE 전체 조회
+			facilityPage = isOldest ? facilityDao.findAllFacilitiesForAdminAsc(pageable)
+									: facilityDao.findAllFacilitiesForAdminDesc(pageable);
+		} else {
+			// 일반사용자 / 비로그인: ACITVE 상태만 조회
+			facilityPage = isOldest ? facilityDao.findAllActiveFacilitiesAsc(pageable)
+									: facilityDao.findAllActiveFacilitiesDesc(pageable);
+		}
+		
 		return facilityPage.map(FacilityResponseDto::fromEntity);
 	}
 
 	// 2. 시설 목록 검색
 	@Override
-	public Page<FacilityResponseDto> searchFacilityList(String keyword, Pageable pageable) {
-		Page<Facility> facilityPage = facilityDao.searchActiveFacilities(keyword, pageable);
-		
+	public Page<FacilityResponseDto> searchFacilityList(String keyword, Pageable pageable, String sort, String token) {
+		Page<Facility> facilityPage;
+		boolean isOldest = "OLDEST".equalsIgnoreCase(sort);
+		if(isSuperAdmin(token)) {
+			// 최고관리자:전체 상태 대상 검색
+			facilityPage = isOldest ? facilityDao.searchFacilitiesForAdminAsc(keyword,pageable)
+									: facilityDao.searchFacilitiesForAdminDesc(keyword,pageable);
+		} else {
+			//일반 사용자 / 비로그인: ACTIVE 상태만 검색
+			facilityPage = isOldest ? facilityDao.searchActiveFacilitiesAsc(keyword, pageable)
+									: facilityDao.searchActiveFacilitiesDesc(keyword, pageable);
+		}
 		return facilityPage.map(FacilityResponseDto::fromEntity);
 	}
 
@@ -181,5 +216,14 @@ public class FacilityServiceImpl implements FacilityService{
 	}
 	
 	
-	
+	// * 시설 전체 리스트 조회 (워케이션신청용)
+	@Override
+	@Transactional(readOnly = true)
+	public List<FacilityResponseDto> getAllFacilities() {
+	    List<Facility> facilityList = facilityDao.findAll();
+	    
+	    return facilityList.stream()
+	            .map(FacilityResponseDto::fromEntity)
+	            .collect(Collectors.toList());
+	}
 }

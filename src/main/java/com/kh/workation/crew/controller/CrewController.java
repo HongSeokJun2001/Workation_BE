@@ -20,8 +20,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.kh.workation.auth.model.service.AuthService;
 import com.kh.workation.common.model.vo.PageInfo;
 import com.kh.workation.common.template.Pagination;
+import com.kh.workation.crew.model.dto.CrewResponse;
 import com.kh.workation.crew.model.service.CrewService;
 import com.kh.workation.crew.model.vo.Crew;
 import com.kh.workation.crew.model.vo.CrewMemberHist;
@@ -42,6 +44,9 @@ public class CrewController {
 	
 	@Autowired
 	private CrewService crewService;
+	
+	@Autowired
+	private AuthService authService;
 	
 	
 	
@@ -260,4 +265,23 @@ public class CrewController {
 	
 	
 
+	// * 워케이션신청용 크루불러오기 코드
+	@GetMapping("/crews/leader")
+	public ResponseEntity<List<CrewResponse>> getMyLeaderCrews(HttpServletRequest request) {
+	    
+		String authHeader = request.getHeader("Authorization");
+    
+        String token = authHeader.substring(7);
+
+        String loginId = authService.getLoginId(token);
+        System.out.println("조회하려는 loginId = " + loginId);
+        
+        List<Crew> crewList = crewService.getLeaderCrews(loginId);
+        
+        List<CrewResponse> responseList = crewList.stream()
+                .map(CrewResponse::new)
+                .toList();
+
+        return ResponseEntity.ok(responseList);
+	}
 }

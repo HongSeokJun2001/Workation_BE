@@ -40,7 +40,8 @@ public interface CrewService {
 	// 크루 탈퇴
 	int leaveCrew(Long employeeId, int crewId);
 	
-	
+	// * 워케이션 신청용
+	List<Crew> getLeaderCrews(String loginId);
 	
 
 }

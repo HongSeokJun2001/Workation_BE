@@ -2,6 +2,9 @@ package com.kh.workation.member.model.service;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import com.kh.workation.member.model.dto.AdminDetailResponse;
 import com.kh.workation.member.model.dto.AdminListResponse;
 import com.kh.workation.member.model.dto.AdminUpdateRequest;
@@ -18,11 +21,17 @@ public interface MemberService {
     // 회원 목록 조회용 서비스
     List<AdminListResponse> selectAdminList(String status, String target);
 
+    Page<AdminListResponse> selectAdminPage(String status, String target, Pageable pageable);
+
     List<AdminListResponse> selectCompanyAdminList(String status, Long companyId);
+
+    Page<AdminListResponse> selectCompanyAdminPage(String status, Long companyId, Pageable pageable);
 
     List<Company> selectActiveCompanyList();
 
     List<Employee> selectEmployeeList(String status, String isProgressed, Long companyId);
+
+    Page<Employee> selectEmployeePage(String status, String isProgressed, Long companyId, Pageable pageable);
 
     EmployeeDetailResponse selectEmployeeSelf(String loginId, Long companyId);
 

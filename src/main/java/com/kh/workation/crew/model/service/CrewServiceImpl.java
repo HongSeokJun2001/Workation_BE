@@ -85,5 +85,18 @@ public class CrewServiceImpl implements CrewService{
 		return crewMemberHistDao.leaveCrew(employeeId, crewId, LocalDateTime.now());
 	}
 
+	@Override
+	public int deleteReply(int replyId) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+	
+	
+	@Override
+	@Transactional(readOnly = true)
+	public List<Crew> getLeaderCrews(String loginId) {
+		
+		return crewDao.findByEmployeeLoginId(loginId);
+	}
 
 }

@@ -1,6 +1,7 @@
 package com.kh.workation.member.controller;
 	
 import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -13,6 +14,9 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import com.kh.workation.auth.model.service.AuthService;
 import com.kh.workation.member.model.dto.AdminDetailResponse;
@@ -29,6 +33,8 @@ import com.kh.workation.member.model.dto.EmployeeSignupRequest;
 import com.kh.workation.member.model.dto.EmployeeUpdateRequest;
 import com.kh.workation.member.model.vo.Employee;
 import com.kh.workation.member.model.vo.Company;
+import com.kh.workation.common.model.vo.PageInfo;
+import com.kh.workation.common.template.Pagination;
 import com.kh.workation.member.model.service.EmployeeAccountRecoveryService;
 import com.kh.workation.member.model.service.MemberService;
 
@@ -55,13 +61,16 @@ public class MemberController {
 	@Operation(summary="최고관리자 및 본사관리자 목록 조회", description="ADMIN 테이블에서 최고관리자와 본사관리자를 함께 조회합니다.")
 	@ApiResponse(responseCode="200", description="조회 성공")
 	@GetMapping("/admin/super/member/list")
-	public ResponseEntity<List<AdminListResponse>> selectAdminList(
+	public ResponseEntity<Map<String, Object>> selectAdminList(
 			@RequestParam(defaultValue = "ALL") String status,
-			@RequestParam(defaultValue = "ALL") String target) {
-		return ResponseEntity.ok(memberService.selectAdminList(status, target));
+			@RequestParam(defaultValue = "ALL") String target,
+			@RequestParam(defaultValue = "1") int cpage) {
+		Pageable pageable = PageRequest.of(Math.max(cpage - 1, 0), 10);
+		Page<AdminListResponse> page = memberService.selectAdminPage(status, target, pageable);
+		return ResponseEntity.ok(pageResponse(page, cpage, 10));
 	}
 
-	@Operation(summary="회사 목록 조회", description="최고관리자가 본사관리자 생성 시 선택할 수 있는 회사 목록을 조회합니다.")
+	@Operation(summary="활성 회사 목록 조회", description="최고관리자가 본사관리자 생성 시 선택할 수 있는 활성 회사 목록을 조회합니다.")
 	@ApiResponse(responseCode="200", description="조회 성공")
 	@GetMapping("/admin/super/company-list")
 	public ResponseEntity<List<Company>> selectActiveCompanyList() {
@@ -71,20 +80,26 @@ public class MemberController {
 	@Operation(summary="본사관리자 목록 조회", description="ADMIN 테이블에서 본사관리자 목록만 조회합니다.")
 	@ApiResponse(responseCode="200", description="조회 성공")
 	@GetMapping("/admin/company/member/admin-list")
-	public ResponseEntity<List<AdminListResponse>> selectCompanyAdminList(
+	public ResponseEntity<Map<String, Object>> selectCompanyAdminList(
 			@RequestParam(defaultValue = "ALL") String status,
+			@RequestParam(defaultValue = "1") int cpage,
 			HttpServletRequest request) {
-		return ResponseEntity.ok(memberService.selectCompanyAdminList(status, getCompanyId(request)));
+		Pageable pageable = PageRequest.of(Math.max(cpage - 1, 0), 10);
+		Page<AdminListResponse> page = memberService.selectCompanyAdminPage(status, getCompanyId(request), pageable);
+		return ResponseEntity.ok(pageResponse(page, cpage, 10));
 	}
 
 	@Operation(summary="직원 목록 조회", description="EMPLOYEE 테이블에서 직원 목록만 조회합니다.")
 	@ApiResponse(responseCode="200", description="조회 성공")
 	@GetMapping("/admin/company/member/employee-list")
-	public ResponseEntity<List<Employee>> selectEmployeeList(
+	public ResponseEntity<Map<String, Object>> selectEmployeeList(
 			@RequestParam(defaultValue = "ALL") String status,
 			@RequestParam(defaultValue = "ALL") String isProgressed,
+			@RequestParam(defaultValue = "1") int cpage,
 			HttpServletRequest request) {
-		return ResponseEntity.ok(memberService.selectEmployeeList(status, isProgressed, getCompanyId(request)));
+		Pageable pageable = PageRequest.of(Math.max(cpage - 1, 0), 10);
+		Page<Employee> page = memberService.selectEmployeePage(status, isProgressed, getCompanyId(request), pageable);
+		return ResponseEntity.ok(pageResponse(page, cpage, 10));
 	}
 
 	@Operation(summary="최고관리자용 관리자 계정 상세 조회", description="최고관리자가 ADMIN 계정 상세 정보를 조회합니다.")
@@ -310,15 +325,32 @@ public class MemberController {
 		}
 	}
 
+	@Operation(summary="페이지 응답 생성", description="페이지 정보를 포함한 응답을 생성합니다.")
+	@ApiResponse(responseCode="200", description="페이지 응답 생성 성공")
+	private Map<String, Object> pageResponse(Page<?> page, int currentPage, int listLimit) {
+		int safeCurrentPage = Math.max(currentPage, 1);
+		PageInfo pageInfo = Pagination.getPageInfo(
+				(int) page.getTotalElements(), safeCurrentPage, 5, listLimit);
+		Map<String, Object> response = new HashMap<>();
+		response.put("list", page.getContent());
+		response.put("pi", pageInfo);
+		return response;
+	}
+
+	@Operation(summary="회사 ID 조회", description="요청 헤더의 토큰에서 회사 ID를 추출합니다.")
+	@ApiResponse(responseCode="200", description="회사 ID 조회 성공")
 	private Long getCompanyId(HttpServletRequest request) {
 		String authorization = request.getHeader("Authorization");
 		String token = authorization.substring(7);
 		return authService.getCompanyId(token);
 	}
 
+	@Operation(summary="로그인 ID 조회", description="요청 헤더의 토큰에서 로그인 ID를 추출합니다.")
+	@ApiResponse(responseCode="200", description="로그인 ID 조회 성공")
 	private String getLoginId(HttpServletRequest request) {
 		String authorization = request.getHeader("Authorization");
 		String token = authorization.substring(7);
 		return authService.getLoginId(token);
 	}
+
 }

@@ -69,9 +69,9 @@ public class Application {
 	@Column(name="CREATED_DATE", nullable=false, columnDefinition="TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
 	private LocalDateTime createdDate;
 	
-	@OneToOne
-    @JoinColumn(name = "WORKATION_ID", insertable = false, updatable = false)
-    private Progress progress;
+	@OneToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "WORKATION_ID", referencedColumnName = "WORKATION_ID", insertable = false, updatable = false)
+	private Progress progress;	
 	
 	public String getStatus() {
         if (this.progress == null) {
