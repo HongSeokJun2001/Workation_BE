@@ -13,10 +13,10 @@ import com.kh.workation.facility.model.dto.FacilityUpdateDto;
 public interface FacilityService {
 
 	// 1. 전체 시설 목록 조회
-	Page<FacilityResponseDto> getFacilityList(Pageable pageable, String sort, String token);
+	Page<FacilityResponseDto> getFacilityList(Pageable pageable, String sort, String region, String token);
 	
 	// 2. 시설 목록 검색
-	Page<FacilityResponseDto> searchFacilityList(String keyword, Pageable pageable, String sort, String token);
+	Page<FacilityResponseDto> searchFacilityList(String keyword, Pageable pageable, String sort, String region, String token);
 	
 	// 3. 특정 시설 상세 조회
 	FacilityResponseDto getFacilityById(Long facilityId);
