@@ -39,7 +39,8 @@ public interface CrewService {
 	// 댓글 삭제 
 	int delteReply(int replyId);
 	
-	
+	// * 워케이션 신청용
+	List<Crew> getLeaderCrews(String loginId);
 	
 
 }
