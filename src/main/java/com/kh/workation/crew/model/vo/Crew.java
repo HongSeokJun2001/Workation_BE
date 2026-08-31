@@ -61,7 +61,7 @@ public class Crew {
 	
 	
 	@Column(name="CREATE_DATE", nullable=false, columnDefinition="TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
-	private LocalDateTime createDate;	//생성일
+	private LocalDate createdDate;	//생성일
 	
 	@Column(name="END_DATE")
 	private LocalDate endDate; //마감일

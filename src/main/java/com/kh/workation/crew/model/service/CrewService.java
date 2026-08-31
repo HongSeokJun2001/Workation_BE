@@ -7,12 +7,16 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import com.kh.workation.crew.model.vo.Crew;
+import com.kh.workation.crew.model.vo.CrewMemberHist;
 import com.kh.workation.reply.model.vo.Reply;
 
 public interface CrewService {
 	
-	// 크루 리스트 조
+	// 크루 리스트 조회
 	Page<Crew> selectCrewList(Pageable pageable);
+	
+	// 크루 단건 조회
+	Crew selectCrew(int crewId);
 	
 	// 크루 검색
 	Page<Crew> searchCrewList(String keyword, Pageable pageable);
@@ -25,19 +29,16 @@ public interface CrewService {
 	Crew updateCrew(Crew c);
 	
 	// 크루삭제
-	int deleteCrew(int CrewId);
+	int deleteCrew(int crewId);
 	
-	// 크루 검색
-	Page<Crew> selectSearchList(String keyword, Pageable pageable);
-	
-	// 댓글 조회 
-	List<Reply> selectReplyList(int crewId);
-	
-	// 댓글 등록 
-	Reply insertReply(Reply r);
-	
-	// 댓글 삭제 
-	int delteReply(int replyId);
+	// 크루 신청
+	CrewMemberHist joinCrew(CrewMemberHist cm);
+
+	// 내가 신청한 크루 조회
+	List<CrewMemberHist> selectMyCrewList(Long employeeId);
+
+	// 크루 탈퇴
+	int leaveCrew(Long employeeId, int crewId);
 	
 	// * 워케이션 신청용
 	List<Crew> getLeaderCrews(String loginId);
