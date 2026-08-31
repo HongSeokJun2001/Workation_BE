@@ -1,5 +1,6 @@
 package com.kh.workation.crew.controller;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -10,8 +11,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -20,7 +24,9 @@ import com.kh.workation.common.model.vo.PageInfo;
 import com.kh.workation.common.template.Pagination;
 import com.kh.workation.crew.model.service.CrewService;
 import com.kh.workation.crew.model.vo.Crew;
+import com.kh.workation.crew.model.vo.CrewMemberHist;
 import com.kh.workation.member.model.vo.Employee;
+import com.kh.workation.reply.model.vo.Reply;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -92,6 +98,16 @@ public class CrewController {
 		
 	}
 	
+	//	크루 단건 조회
+	@GetMapping("/crews/{crewId}")
+	public ResponseEntity<Crew> selectCrew(@PathVariable int crewId){
+		
+		Crew c = crewService.selectCrew(crewId);
+		
+		return ResponseEntity.status(HttpStatus.OK).body(c);
+		
+	}
+	
 	// 크루 검색
 	@GetMapping("crews/search")
 	public ResponseEntity<HashMap<String, Object>> searchCrewList(
@@ -155,16 +171,75 @@ public class CrewController {
 	
 	
 	// 크루 수정
+	@PutMapping("/crews/{crewId}")
+	public ResponseEntity<String> updateCrew(@PathVariable("crewId")int crewId, @RequestBody Crew c, HttpServletRequest request){
+		
+		Crew updateCr = crewService.updateCrew(c);
+		
+		String message = (updateCr != null) ? "success" : "fail";
+		
+		return ResponseEntity.status(HttpStatus.OK).body(message);
+		
+		
+	}
+	
+	
+	
 	
 	// 크루 삭제
+	@DeleteMapping("/crews/{crewId}")
+	public ResponseEntity<String> deleteCrew(@PathVariable("crewId")int crewId){
+		
+		int result = crewService.deleteCrew(crewId);
+		
+		String message = (result > 0) ? "success" : "fail";
+		
+		return ResponseEntity.status(HttpStatus.OK).body(message);
+		
+	}
 	
-	// 크루 검색
 	
-	
-	
-	
-	
-	// 댓글 조회
+	// 크루신청	
+	@PostMapping("/crews/{crewId}/join")
+	public ResponseEntity<String> joinCrew(@PathVariable int crewId,
+											HttpServletRequest request){
+		
+		// 1. 작성자(크루장) 역할을 할 임시 Employee 객체 생성
+	    Employee tempEmployee = new Employee();
+	    
+	    // 2. 크루장 사원 PK ID 세팅 (Employee의 PK 타입에 맞춰 설정하세요)
+	    // Integer인 경우: 1
+	    // Long인 경우: 1L
+	    tempEmployee.setEmployeeId(1L); // 또는 tempEmployee.setEmpId(1); 등 Employee VO의 PK setter명
+	    
+	    // 3. Crew 엔티티의 employee 필드에 세팅
+	    CrewMemberHist cm = new CrewMemberHist();
+	    cm.setEmployee(tempEmployee);
+	    cm.setCrew(crewService.selectCrew(crewId));
+	    
+	    
+	   CrewMemberHist crewMem = crewService.joinCrew(cm);
+	   
+	   String message = (crewMem != null) ? "success" : "fail";
+	   
+	   return ResponseEntity.status(HttpStatus.OK).body(message);
+		
+	}
+
+	// 내가 신청한 크루 목록 조회
+	@GetMapping("/crews/mylist/{employeeId}")
+	public ResponseEntity<List<CrewMemberHist>> selectMyCrewList(
+			@PathVariable Long employeeId) {
+		return ResponseEntity.ok(crewService.selectMyCrewList(employeeId));
+	}
+
+	// 크루 탈퇴
+	@DeleteMapping("/crews/{crewId}/join")
+	public ResponseEntity<String> leaveCrew(@PathVariable int crewId) {
+		int result = crewService.leaveCrew(1L, crewId);
+		//crewId나중에 수
+		return ResponseEntity.ok(result > 0 ? "success" : "fail");
+	}
 	
 	// 댓글 작성
 	
@@ -179,6 +254,9 @@ public class CrewController {
 	// 크루 신청버튼 클릭
 	
 	// 크루 탈퇴
+	
+	
+	// 내가 신청한 크루 목록 조
 	
 	
 
