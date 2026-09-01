@@ -19,11 +19,15 @@ import com.kh.workation.member.model.dto.AdminDetailResponse;
 import com.kh.workation.member.model.dto.AdminListResponse;
 import com.kh.workation.member.model.dto.AdminUpdateRequest;
 import com.kh.workation.member.model.dto.CompanyAdminCreateRequest;
+import com.kh.workation.member.model.dto.CompanyCreateRequest;
+import com.kh.workation.member.model.dto.CompanyResponse;
+import com.kh.workation.member.model.dto.CompanyUpdateRequest;
 import com.kh.workation.member.model.dto.SuperAdminCreateRequest;
 import com.kh.workation.member.model.dto.EmployeeDetailResponse;
 import com.kh.workation.member.model.dto.EmployeeSignupRequest;
 import com.kh.workation.member.model.dto.EmployeeUpdateRequest;
 import com.kh.workation.member.model.event.EmployeeApprovalEvent;
+import com.kh.workation.member.model.event.EmployeeRejectionEvent;
 import com.kh.workation.member.model.vo.Admin;
 import com.kh.workation.member.model.vo.Company;
 import com.kh.workation.member.model.vo.Employee;
@@ -124,6 +128,94 @@ public class MemberServiceImpl implements MemberService {
 		return companyDao.findByCompanyStatus(Company.STATUS_ACTIVE);
 	}
 
+	@Override
+	@Transactional(readOnly = true)
+	public Page<CompanyResponse> selectCompanyPage(String status, Pageable pageable) {
+		Page<Company> page = isAllStatus(status)
+				? companyDao.findAll(pageable)
+				: companyDao.findByCompanyStatus(status.toUpperCase(), pageable);
+
+		return page.map(CompanyResponse::from);
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public CompanyResponse selectCompanyDetail(Long companyId) {
+		return CompanyResponse.from(findCompany(companyId));
+	}
+
+	@Override
+	@Transactional
+	public CompanyResponse createCompany(CompanyCreateRequest request) {
+		String companyName = trimToNull(request.getCompanyName());
+		String businessNo = trimToNull(request.getBusinessNo());
+
+		if (companyName == null || businessNo == null) {
+			throw new IllegalArgumentException("회사명과 사업자번호를 모두 입력해주세요.");
+		}
+
+		if (companyDao.existsByBusinessNo(businessNo)) {
+			throw new IllegalArgumentException("이미 등록된 사업자번호입니다.");
+		}
+
+		Company company = new Company();
+		company.setCompanyName(companyName);
+		company.setBusinessNo(businessNo);
+		company.setCompanyStatus(Company.STATUS_ACTIVE);
+
+		return CompanyResponse.from(companyDao.save(company));
+	}
+
+	@Override
+	@Transactional
+	public CompanyResponse updateCompany(Long companyId, CompanyUpdateRequest request) {
+		Company company = findCompany(companyId);
+
+		String companyName = trimToNull(request.getCompanyName());
+		String businessNo = trimToNull(request.getBusinessNo());
+
+		if (companyName == null || businessNo == null) {
+			throw new IllegalArgumentException("회사명과 사업자번호를 모두 입력해주세요.");
+		}
+
+		if (companyDao.existsByBusinessNoAndCompanyIdNot(businessNo, companyId)) {
+			throw new IllegalArgumentException("이미 등록된 사업자번호입니다.");
+		}
+
+		company.setCompanyName(companyName);
+		company.setBusinessNo(businessNo);
+		company.setCompanyStatus(validateCompanyStatus(request.getStatus()));
+
+		return CompanyResponse.from(company);
+	}
+
+	private Company findCompany(Long companyId) {
+		return companyDao.findById(companyId)
+				.orElseThrow(() -> new IllegalArgumentException("해당 고객사를 찾을 수 없습니다."));
+	}
+
+	private String validateCompanyStatus(String status) {
+		if (status == null || status.isBlank()) {
+			return Company.STATUS_ACTIVE;
+		}
+
+		String upperStatus = status.toUpperCase();
+
+		if (!Company.STATUS_ACTIVE.equals(upperStatus) && !Company.STATUS_INACTIVE.equals(upperStatus)) {
+			throw new IllegalArgumentException("고객사 상태는 ACTIVE 또는 INACTIVE만 가능합니다.");
+		}
+
+		return upperStatus;
+	}
+
+	private String trimToNull(String value) {
+		if (value == null || value.isBlank()) {
+			return null;
+		}
+
+		return value.trim();
+	}
+
 	// EMPLOYEE 테이블에서 조건에 맞는 직원만 조회한다.
 	@Override
 	@Transactional(readOnly = true)
@@ -213,7 +305,7 @@ public class MemberServiceImpl implements MemberService {
 		Admin admin = adminDao.findById(adminId)
 				.orElseThrow(() -> new IllegalArgumentException("해당 관리자 계정을 찾을 수 없습니다."));
 
-		applyAdminUpdate(admin, request);
+		applyAdminUpdate(admin, request, true);
 		return AdminDetailResponse.from(admin, findCompanyName(admin.getCompanyId()));
 	}
 
@@ -227,7 +319,7 @@ public class MemberServiceImpl implements MemberService {
 			throw new IllegalArgumentException("수정 권한이 없는 관리자 계정입니다.");
 		}
 
-		applyAdminUpdate(admin, request);
+		applyAdminUpdate(admin, request, false);
 		return AdminDetailResponse.from(admin, findCompanyName(admin.getCompanyId()));
 	}
 
@@ -307,6 +399,11 @@ public class MemberServiceImpl implements MemberService {
 			throw new IllegalArgumentException("수정 권한이 없는 직원 계정입니다.");
 		}
 
+		if (Employee.PROGRESSED_N.equals(employee.getIsProgressed())
+				&& !employee.getStatus().equals(request.getStatus())) {
+			throw new IllegalArgumentException("가입 승인 전에는 계정 상태를 변경할 수 없습니다.");
+		}
+
 		employee.setLoginId(request.getLoginId());
 		employee.setEmpNo(request.getEmpNo());
 		employee.setEmployeeName(request.getEmployeeName());
@@ -325,6 +422,25 @@ public class MemberServiceImpl implements MemberService {
 		}
 
 		return EmployeeDetailResponse.from(employee, findCompanyName(employee.getCompanyId()));
+	}
+
+	@Override
+	@Transactional
+	public void rejectEmployee(Long employeeId, Long companyId) {
+		Employee employee = employeeDao.findById(employeeId)
+				.orElseThrow(() -> new IllegalArgumentException("해당 직원 계정을 찾을 수 없습니다."));
+
+		if (!companyId.equals(employee.getCompanyId())) {
+			throw new IllegalArgumentException("거부 권한이 없는 직원 계정입니다.");
+		}
+
+		if (!Employee.STATUS_LOCKED.equals(employee.getStatus())
+				|| !Employee.PROGRESSED_N.equals(employee.getIsProgressed())) {
+			throw new IllegalArgumentException("승인 대기 상태의 직원 계정만 거부할 수 있습니다.");
+		}
+
+		eventPublisher.publishEvent(new EmployeeRejectionEvent(employee.getEmail(), employee.getEmployeeName()));
+		employeeDao.delete(employee);
 	}
 
 	@Override
@@ -433,9 +549,17 @@ public class MemberServiceImpl implements MemberService {
 		return isProgressed == null || isProgressed.isBlank() || "ALL".equalsIgnoreCase(isProgressed);
 	}
 
-	private void applyAdminUpdate(Admin admin, AdminUpdateRequest request) {
+	private void applyAdminUpdate(Admin admin, AdminUpdateRequest request, boolean allowCompanyChange) {
 		admin.setLoginId(request.getLoginId());
 		admin.setStatus(request.getStatus());
+
+		if (allowCompanyChange && Admin.ROLE_COMPANY_ADMIN.equals(admin.getRole())
+				&& request.getCompanyId() != null) {
+			Company company = companyDao.findById(request.getCompanyId())
+					.filter(foundCompany -> Company.STATUS_ACTIVE.equals(foundCompany.getCompanyStatus()))
+					.orElseThrow(() -> new IllegalArgumentException("선택한 회사가 존재하지 않거나 비활성 상태입니다."));
+			admin.setCompanyId(company.getCompanyId());
+		}
 
 		if (request.getPassword() != null && !request.getPassword().isBlank()) {
 			validatePassword(request.getPassword());
