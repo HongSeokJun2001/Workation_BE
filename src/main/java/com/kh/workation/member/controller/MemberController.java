@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,6 +24,9 @@ import com.kh.workation.member.model.dto.AdminDetailResponse;
 import com.kh.workation.member.model.dto.AdminListResponse;
 import com.kh.workation.member.model.dto.AdminUpdateRequest;
 import com.kh.workation.member.model.dto.CompanyAdminCreateRequest;
+import com.kh.workation.member.model.dto.CompanyCreateRequest;
+import com.kh.workation.member.model.dto.CompanyResponse;
+import com.kh.workation.member.model.dto.CompanyUpdateRequest;
 import com.kh.workation.member.model.dto.SuperAdminCreateRequest;
 import com.kh.workation.member.model.dto.EmployeeDetailResponse;
 import com.kh.workation.member.model.dto.EmployeeFindIdRequest;
@@ -75,6 +79,52 @@ public class MemberController {
 	@GetMapping("/admin/super/company-list")
 	public ResponseEntity<List<Company>> selectActiveCompanyList() {
 		return ResponseEntity.ok(memberService.selectActiveCompanyList());
+	}
+
+	@Operation(summary="고객사 전체 목록 조회", description="최고관리자가 고객사 목록을 상태별로 페이징 조회합니다.")
+	@ApiResponse(responseCode="200", description="조회 성공")
+	@GetMapping("/admin/super/company/list")
+	public ResponseEntity<Map<String, Object>> selectCompanyList(
+			@RequestParam(defaultValue = "ALL") String status,
+			@RequestParam(defaultValue = "1") int cpage) {
+		Pageable pageable = PageRequest.of(Math.max(cpage - 1, 0), 10);
+		Page<CompanyResponse> page = memberService.selectCompanyPage(status, pageable);
+		return ResponseEntity.ok(pageResponse(page, cpage, 10));
+	}
+
+	@Operation(summary="고객사 상세 조회", description="최고관리자가 고객사 상세 정보를 조회합니다.")
+	@ApiResponse(responseCode="200", description="조회 성공")
+	@GetMapping("/admin/super/company/{companyId}")
+	public ResponseEntity<?> selectCompanyDetail(@PathVariable Long companyId) {
+		try {
+			return ResponseEntity.ok(memberService.selectCompanyDetail(companyId));
+		} catch (IllegalArgumentException e) {
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+		}
+	}
+
+	@Operation(summary="고객사 등록", description="최고관리자가 새로운 고객사를 등록합니다.")
+	@ApiResponse(responseCode="200", description="등록 성공")
+	@PostMapping("/admin/super/new-company")
+	public ResponseEntity<?> createCompany(@RequestBody CompanyCreateRequest request) {
+		try {
+			return ResponseEntity.ok(memberService.createCompany(request));
+		} catch (IllegalArgumentException e) {
+			return ResponseEntity.badRequest().body(e.getMessage());
+		}
+	}
+
+	@Operation(summary="고객사 정보 수정", description="최고관리자가 고객사 정보를 수정합니다.")
+	@ApiResponse(responseCode="200", description="수정 성공")
+	@PutMapping("/admin/super/company/{companyId}")
+	public ResponseEntity<?> updateCompany(
+			@PathVariable Long companyId,
+			@RequestBody CompanyUpdateRequest request) {
+		try {
+			return ResponseEntity.ok(memberService.updateCompany(companyId, request));
+		} catch (IllegalArgumentException e) {
+			return ResponseEntity.badRequest().body(e.getMessage());
+		}
 	}
 
 	@Operation(summary="본사관리자 목록 조회", description="ADMIN 테이블에서 본사관리자 목록만 조회합니다.")
@@ -231,6 +281,20 @@ public class MemberController {
 			HttpServletRequest httpRequest) {
 		try {
 			return ResponseEntity.ok(memberService.approveEmployee(employeeId, getCompanyId(httpRequest)));
+		} catch (IllegalArgumentException e) {
+			return ResponseEntity.badRequest().body(e.getMessage());
+		}
+	}
+
+	@Operation(summary="본사관리자용 직원 가입 신청 거부", description="승인 대기 상태의 같은 회사 직원 가입 신청을 삭제합니다.")
+	@ApiResponse(responseCode="204", description="거부 성공")
+	@DeleteMapping("/admin/company/member/employee/{employeeId}/rejection")
+	public ResponseEntity<?> rejectEmployee(
+			@PathVariable Long employeeId,
+			HttpServletRequest httpRequest) {
+		try {
+			memberService.rejectEmployee(employeeId, getCompanyId(httpRequest));
+			return ResponseEntity.noContent().build();
 		} catch (IllegalArgumentException e) {
 			return ResponseEntity.badRequest().body(e.getMessage());
 		}
