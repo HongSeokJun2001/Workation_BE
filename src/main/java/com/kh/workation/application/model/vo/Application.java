@@ -48,7 +48,7 @@ public class Application {
     @JoinColumn(name = "COMPANY_ID", nullable = false)
     private Company company;
 	
-	@ManyToOne(fetch = FetchType.EAGER) // 또는 FetchType.LAZY + Fetch Join
+	@ManyToOne(fetch = FetchType.EAGER) 
     @JoinColumn(name = "CREW_ID", nullable = false)
     private Crew crew;
 	

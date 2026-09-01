@@ -6,11 +6,17 @@ import java.time.LocalDateTime;
 import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
 
+import com.kh.workation.application.model.vo.Application;
+import com.kh.workation.facility.model.vo.Facility;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -34,17 +40,17 @@ public class Reservation {
 	@GeneratedValue(strategy=GenerationType.IDENTITY)
 	private int reservationId;
 	
-	@Column(name = "WORKATION_ID", nullable = false)
-	private int workationId;
+	@ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "WORKATION_ID")
+    private Application application;
 	
-	@Column(name = "FACILITY_ID")
-	private Integer facilityId; 
+	@ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "FACILITY_ID")
+    private Facility facility;
 	
-	@Column(name = "START_DATE", nullable = false)
-	private LocalDate startDate;
-	
-	@Column(name = "END_DATE", nullable = false)
-	private LocalDate endDate;
+	@ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "RESERV_DT_ID")
+    private ReservationDate reservationDate;
 	
 	@Column(name="STATUS", columnDefinition="VARCHAR(20) DEFAULT 'RESERVED'")
 	private String status;
