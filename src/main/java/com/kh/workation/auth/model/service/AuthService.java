@@ -18,4 +18,6 @@ public interface AuthService {
 	Long getCompanyId(String token);
 
 	String getLoginId(String token);
+	
+	Long getAdminId(String token);
 }
