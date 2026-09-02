@@ -32,4 +32,7 @@ public interface FacilityService {
 	
 	// * 시설 전체 리스트 조회 (워케이션신청용)
 	List<FacilityResponseDto> getAllFacilities();
+
+	// * 운영 중인 시설 수 조회
+	long countActiveFacilities();
 }

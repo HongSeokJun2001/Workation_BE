@@ -130,6 +130,12 @@ public class MemberServiceImpl implements MemberService {
 
 	@Override
 	@Transactional(readOnly = true)
+	public long countActiveCompanies() {
+		return companyDao.findByCompanyStatus(Company.STATUS_ACTIVE).size();
+	}
+
+	@Override
+	@Transactional(readOnly = true)
 	public Page<CompanyResponse> selectCompanyPage(String status, Pageable pageable) {
 		Page<Company> page = isAllStatus(status)
 				? companyDao.findAll(pageable)
