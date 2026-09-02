@@ -30,6 +30,8 @@ public interface CrewDao extends JpaRepository<Crew, Integer>{
 			""")
 	int deleteCrew(@Param("crewId")int crewId);
 	
+	
+	
 	List<Crew> findByEmployeeLoginId(String loginId);
 
 }

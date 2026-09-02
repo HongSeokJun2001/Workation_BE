@@ -14,7 +14,7 @@ public class CrewResponse {
     private String crewName;
     private String crewContent;
     private String status;
-    private LocalDateTime createDate;
+    private LocalDate createDate;
     private LocalDate endDate;
     private Integer capacity;
     
@@ -26,7 +26,7 @@ public class CrewResponse {
         this.crewName = crew.getCrewName();
         this.crewContent = crew.getCrewContent();
         this.status = crew.getStatus();
-        this.createDate = crew.getCreateDate();
+        this.createDate = crew.getCreatedDate();
         this.endDate = crew.getEndDate();
         this.capacity = crew.getCapacity();
 

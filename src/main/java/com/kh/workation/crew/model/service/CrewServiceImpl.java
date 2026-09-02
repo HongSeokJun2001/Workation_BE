@@ -1,7 +1,6 @@
 package com.kh.workation.crew.model.service;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,7 +13,8 @@ import com.kh.workation.crew.model.dao.CrewDao;
 import com.kh.workation.crew.model.dao.CrewMemberHistDao;
 import com.kh.workation.crew.model.vo.Crew;
 import com.kh.workation.crew.model.vo.CrewMemberHist;
-import com.kh.workation.reply.model.vo.Reply;
+import com.kh.workation.member.model.dao.EmployeeDao;
+import com.kh.workation.member.model.vo.Employee;
 
 @Service
 public class CrewServiceImpl implements CrewService{
@@ -24,6 +24,9 @@ public class CrewServiceImpl implements CrewService{
 	
 	@Autowired
 	private CrewMemberHistDao crewMemberHistDao;
+	
+	@Autowired
+	private EmployeeDao employeeDao;
 	
 	
 	@Override
@@ -62,34 +65,67 @@ public class CrewServiceImpl implements CrewService{
 	public int deleteCrew(int crewId) {
 		return crewDao.deleteCrew(crewId);
 	}
+	
+	//------------------------------------------------------
+
+	
+	
+	@Override
+	@Transactional
+	public CrewMemberHist joinCrew(int crewId, String loginId) {
+		
+		// 이미 가입한 크루인지 확인
+	    if (crewMemberHistDao.existsByEmployee_LoginIdAndCrew_CrewIdAndStatus(
+	            loginId, crewId, "ACTIVE")) {
+	        return null;
+	    }
+
+	    // JWT의 loginId로 현재 로그인한 직원 조회
+	    Employee employee = employeeDao
+	            .findByLoginIdAndStatus(loginId, Employee.STATUS_ACTIVE)
+	            .orElse(null);
+
+	    // 가입하려는 크루 조회
+	    Crew crew = crewDao.findById(crewId).orElse(null);
+
+	    if (employee == null || crew == null) {
+	        return null;
+	    }
+
+	    // 크루 가입 이력 생성
+	    CrewMemberHist cm = new CrewMemberHist();
+	    cm.setEmployee(employee);
+	    cm.setCrew(crew);
+	    cm.setStatus("ACTIVE");
+
+	    return crewMemberHistDao.save(cm);
+	}
+	
+	
+
+	@Override
+	public List<CrewMemberHist> selectMyCrewList(String loginId) {
+		return crewMemberHistDao.findMyCrewList(loginId, "ACTIVE");
+	}
+	
+	
+	
 
 	@Override
 	@Transactional
-	public CrewMemberHist joinCrew(CrewMemberHist cm) {
-		if (crewMemberHistDao.existsByEmployee_EmployeeIdAndCrew_CrewIdAndStatus(
-				cm.getEmployee().getEmployeeId(), cm.getCrew().getCrewId(), "ACTIVE")) {
-			return null;
-		}
-		cm.setStatus("ACTIVE");
-		return crewMemberHistDao.save(cm);
+	public int leaveCrew(int crewId, String loginId) {
+	    return crewMemberHistDao.leaveCrew(
+	            loginId,
+	            crewId,
+	            LocalDateTime.now()
+	    );
 	}
 
-	@Override
-	public List<CrewMemberHist> selectMyCrewList(Long employeeId) {
-		return crewMemberHistDao.findByEmployee_EmployeeIdAndStatus(employeeId, "ACTIVE");
-	}
-
-	@Override
-	@Transactional
-	public int leaveCrew(Long employeeId, int crewId) {
-		return crewMemberHistDao.leaveCrew(employeeId, crewId, LocalDateTime.now());
-	}
-
-	@Override
-	public int deleteReply(int replyId) {
-		// TODO Auto-generated method stub
-		return 0;
-	}
+	
+	
+	//--------------------------------------------------------
+	
+	
 	
 	
 	@Override
