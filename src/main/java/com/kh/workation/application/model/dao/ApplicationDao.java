@@ -15,17 +15,24 @@ import com.kh.workation.application.model.vo.Application;
 @Repository
 public interface ApplicationDao extends JpaRepository<Application, Integer> {
 
-	@Query("SELECT a FROM Application a " +
-	           "LEFT JOIN a.progress p " +
-	           "WHERE (p.status = :status OR (p IS NULL AND :status = 'APPLY')) " +
-	           "ORDER BY a.workationId DESC")
-    Page<Application> findByProgressStatus(@Param("status") String status, Pageable pageable);
+	@EntityGraph(attributePaths = {
+		    "crew", 
+		    "crew.employee", 
+		    "facility", 
+		    "reservationDate",
+		    "progress"
+		})
+		Page<Application> findAllByOrderByWorkationIdDesc(Pageable pageable);
 	
 	@EntityGraph(attributePaths = {
 	        "crew",
 	        "crew.employee",
 	        "facility",
-	        "reservationDate"
+	        "reservationDate",
+	        "progress",
+	        "approval",
+	        "reservation"
+	        
 	    })
 	    Optional<Application> findByWorkationId(int workationId);
 	

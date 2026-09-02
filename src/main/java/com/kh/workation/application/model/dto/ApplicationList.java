@@ -19,11 +19,13 @@ public class ApplicationList {
     private String facilityName;   
     private String status;         
     private LocalDateTime createdDate; 
+    private String region;
 
     public ApplicationList(Application a) {
     	this.workationId = a.getWorkationId();
         this.createdDate = a.getCreatedDate();
         this.status = a.getStatus();
+        this.region = a.getRegion();
 
         // 크루장
         if (a.getCrew() != null && a.getCrew().getEmployee() != null) {

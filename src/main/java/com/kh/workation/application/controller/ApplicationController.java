@@ -69,9 +69,44 @@ public class ApplicationController {
 				 .body(hm);
 	}
 	
+	@GetMapping("/application/member/list")
+	public ResponseEntity<HashMap<String, Object>> getApplicationMemberList(
+			@RequestParam(value="cpage", defaultValue="1") int currentPage){
+		
+		int pageLimit = 10;
+		int boardLimit = 10;
+		
+		Pageable pageable = PageRequest.of(currentPage - 1, boardLimit);
+		
+		Page<Application> page = applicationService.getApplicationMemberList(pageable);
+		
+		List<ApplicationList> list = page.getContent().stream()
+	            .map(ApplicationList::new)
+	            .toList();
+		
+		long listCount = page.getTotalElements();
+		
+		PageInfo pi = Pagination.getPageInfo((int)listCount, currentPage, 
+				pageLimit, boardLimit);
+		
+		HashMap<String, Object> hm = new HashMap<>();
+		
+		hm.put("pi", pi);
+		hm.put("list", list);
+		
+		return ResponseEntity.status(HttpStatus.OK)
+				 .body(hm);
+	}
+	
 	@GetMapping("/application/{workationId}")
 	public ResponseEntity<ApplicationDetail> getApplicationDetail(@PathVariable("workationId") int workationId) {
 		ApplicationDetail detail = applicationService.getApplicationDetail(workationId);
+        return ResponseEntity.ok(detail);
+    }
+	
+	@GetMapping("/application/member/{workationId}")
+	public ResponseEntity<ApplicationDetail> getApplicationMemberDetail(@PathVariable("workationId") int workationId) {
+		ApplicationDetail detail = applicationService.getApplicationMemberDetail(workationId);
         return ResponseEntity.ok(detail);
     }
 	

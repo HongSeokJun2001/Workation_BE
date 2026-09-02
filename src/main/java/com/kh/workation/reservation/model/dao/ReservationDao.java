@@ -1,5 +1,7 @@
 package com.kh.workation.reservation.model.dao;
 
+import java.util.Optional;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -19,4 +21,22 @@ public interface ReservationDao extends JpaRepository<Reservation, Integer>{
 	        "reservationDate"
 	    })
 	Page<Reservation> findAllByOrderByReservationIdDesc(Pageable pageable);
+	
+	@EntityGraph(attributePaths = {
+	        "application", 
+	        "application.crew", 
+	        "application.crew.employee", 
+	        "facility", 
+	        "reservationDate"
+	    })
+	    Optional<Reservation> findByReservationId(int reservationId);
+	
+	@EntityGraph(attributePaths = {
+	        "application", 
+	        "application.crew", 
+	        "application.crew.employee", 
+	        "facility", 
+	        "reservationDate"
+	    })
+	    Optional<Reservation> findByApplication_WorkationId(int workationId);
 }

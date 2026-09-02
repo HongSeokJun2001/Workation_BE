@@ -10,12 +10,17 @@ public interface ApplicationService {
 	
 	Page<Application> getApplicationList(Pageable pageable);
 	
+	Page<Application> getApplicationMemberList(Pageable pageable);
+	
 	ApplicationDetail getApplicationDetail(int workationId);
+	
+	ApplicationDetail getApplicationMemberDetail(int workationId);
 	
 	Application insertApplication(Application a);
 	
 	Application approveApplication(int workationId, Long AdminId);
 	
 	Application cancelApplication(int workationId, Long AdminId, String reason);
+	
 	
 }
