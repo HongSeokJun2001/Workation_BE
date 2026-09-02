@@ -14,4 +14,8 @@ public interface ApplicationService {
 	
 	Application insertApplication(Application a);
 	
+	Application approveApplication(int workationId, Long AdminId);
+	
+	Application cancelApplication(int workationId, Long AdminId, String reason);
+	
 }

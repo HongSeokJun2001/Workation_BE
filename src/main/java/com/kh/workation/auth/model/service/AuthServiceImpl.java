@@ -46,7 +46,7 @@ public class AuthServiceImpl implements AuthService {
 
             if (admin != null && passwordEncoder.matches(request.getPassword(), admin.getPassword())) {
                 return LoginResponse.builder()
-                    .accessToken(generateToken(admin.getLoginId(), admin.getRole(), admin.getCompanyId()))
+                    .accessToken(generateToken(admin.getLoginId(),admin.getAdminId(), admin.getRole(), admin.getCompanyId()))
                         .tokenType("Bearer")
                         .role(admin.getRole())
                         .build();
@@ -60,7 +60,7 @@ public class AuthServiceImpl implements AuthService {
 
             if (employee != null && passwordEncoder.matches(request.getPassword(), employee.getPassword())) {
                 return LoginResponse.builder()
-                    .accessToken(generateToken(employee.getLoginId(), Admin.ROLE_EMPLOYEE, employee.getCompanyId()))
+                    .accessToken(generateToken(employee.getLoginId(), null, Admin.ROLE_EMPLOYEE, employee.getCompanyId()))
                         .tokenType("Bearer")
                         .role(Admin.ROLE_EMPLOYEE)
                         .build();
@@ -162,9 +162,25 @@ public class AuthServiceImpl implements AuthService {
             return null;
         }
     }
+    
+    @Override
+    public Long getAdminId(String token) {
+    	try {
+            Claims claims = Jwts.parserBuilder()
+                    .setSigningKey(signingKey)
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
 
+            Number adminId = claims.get("adminId", Number.class);
+            return adminId == null ? null : adminId.longValue();
+        } catch (Exception e) {
+            return null;
+        }
+    	
+    }
 
-    private String generateToken(String loginId, String role, Long companyId) {
+    private String generateToken(String loginId, Long adminId, String role, Long companyId) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + 3600_000);
 
@@ -173,6 +189,10 @@ public class AuthServiceImpl implements AuthService {
                 .claim("role", role)
                 .setIssuedAt(now)
                 .setExpiration(expiry);
+        
+        if (adminId != null) {
+            tokenBuilder.claim("adminId", adminId);
+        }
 
         if (companyId != null) {
             tokenBuilder.claim("companyId", companyId);

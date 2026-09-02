@@ -16,8 +16,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.kh.workation.common.model.vo.PageInfo;
 import com.kh.workation.common.template.Pagination;
+import com.kh.workation.reservation.model.dto.ReservationList;
 import com.kh.workation.reservation.model.service.ReservationService;
-import com.kh.workation.reservation.model.vo.Reservation;
 
 @CrossOrigin
 @RestController
@@ -26,7 +26,7 @@ public class ReservationController {
 	@Autowired
 	private ReservationService reservationService;
 	
-	@GetMapping("/reservation/List")
+	@GetMapping("/reservation/list")
 	public ResponseEntity<HashMap<String, Object>> getReservationList(
 			@RequestParam(value="cpage", defaultValue="1") int currentPage){
 		
@@ -35,9 +35,9 @@ public class ReservationController {
 		
 		Pageable pageable = PageRequest.of(currentPage - 1, boardLimit);
 		
-		Page<Reservation> page = reservationService.getReservationList(pageable);
+		Page<ReservationList> page = reservationService.getReservationList(pageable);
 		
-		List<Reservation> list = page.getContent();
+		List<ReservationList> list = page.getContent();
 		
 		long listCount = page.getTotalElements();
 		

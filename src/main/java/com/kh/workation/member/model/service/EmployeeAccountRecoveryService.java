@@ -14,6 +14,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.kh.workation.member.model.dao.CompanyDao;
 import com.kh.workation.member.model.dao.EmployeeDao;
 import com.kh.workation.member.model.dto.EmployeeFindIdRequest;
 import com.kh.workation.member.model.dto.EmployeeFindPasswordRequest;
@@ -27,6 +28,7 @@ public class EmployeeAccountRecoveryService {
     private static final Duration CODE_VALIDITY = Duration.ofMinutes(5);
     private static final SecureRandom RANDOM = new SecureRandom();
 
+    private final CompanyDao companyDao;
     private final EmployeeDao employeeDao;
     private final PasswordEncoder passwordEncoder;
     private final JavaMailSender mailSender;
@@ -34,10 +36,12 @@ public class EmployeeAccountRecoveryService {
     private final Map<String, RecoveryRequest> requests = new ConcurrentHashMap<>();
 
     public EmployeeAccountRecoveryService(
+            CompanyDao companyDao,
             EmployeeDao employeeDao,
             PasswordEncoder passwordEncoder,
             JavaMailSender mailSender,
             @Value("${spring.mail.username:}") String senderAddress) {
+        this.companyDao = companyDao;
         this.employeeDao = employeeDao;
         this.passwordEncoder = passwordEncoder;
         this.mailSender = mailSender;
@@ -46,11 +50,22 @@ public class EmployeeAccountRecoveryService {
 
     @Transactional(readOnly = true)
     public String requestLoginId(EmployeeFindIdRequest request) {
-        Employee employee = employeeDao.findByEmpNoAndEmployeeNameAndPhoneAndEmailAndStatusAndIsProgressed(
-                request.getEmpNo(), request.getEmployeeName(), request.getPhone(), request.getEmail(),
+        String normalizedCompanyName = removeWhitespace(request.getCompanyName());
+        Long companyId = companyDao.findAll().stream()
+            .filter(company -> normalizedCompanyName.equals(removeWhitespace(company.getCompanyName())))
+            .map(company -> company.getCompanyId())
+            .findFirst()
+            .orElse(null);
+        Employee employee = companyId == null ? null
+            : employeeDao.findByCompanyIdAndEmployeeNameAndPhoneAndEmailAndStatusAndIsProgressed(
+            companyId, request.getEmployeeName(), request.getPhone(), request.getEmail(),
             Employee.STATUS_ACTIVE, Employee.PROGRESSED_Y).orElse(null);
 
         return issueCode(employee, "아이디 찾기");
+    }
+
+    private String removeWhitespace(String value) {
+        return value == null ? "" : value.replaceAll("\\s+", "");
     }
 
     @Transactional(readOnly = true)

@@ -17,8 +17,8 @@ public interface EmployeeDao extends JpaRepository<Employee, Long> {
         java.util.Optional<Employee> findByLoginIdAndStatusAndIsProgressed(
             String loginId, String status, String isProgressed);
 
-        java.util.Optional<Employee> findByEmpNoAndEmployeeNameAndPhoneAndEmailAndStatusAndIsProgressed(
-            Long empNo, String employeeName, String phone, String email,
+        java.util.Optional<Employee> findByCompanyIdAndEmployeeNameAndPhoneAndEmailAndStatusAndIsProgressed(
+            Long companyId, String employeeName, String phone, String email,
             String status, String isProgressed);
 
     List<Employee> findByStatus(String status);
