@@ -8,6 +8,7 @@ import org.hibernate.annotations.DynamicUpdate;
 import com.kh.workation.crew.model.vo.Crew;
 import com.kh.workation.facility.model.vo.Facility;
 import com.kh.workation.member.model.vo.Company;
+import com.kh.workation.reservation.model.vo.Reservation;
 import com.kh.workation.reservation.model.vo.ReservationDate;
 
 import jakarta.persistence.Column;
@@ -79,5 +80,12 @@ public class Application {
         }
         return this.progress.getStatus();
     }
+	
+	@OneToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "WORKATION_ID", referencedColumnName = "WORKATION_ID", insertable = false, updatable = false)
+	private Approval approval;
+	
+	@OneToOne(mappedBy = "application", fetch = FetchType.LAZY)
+	private Reservation reservation;
 	
 }

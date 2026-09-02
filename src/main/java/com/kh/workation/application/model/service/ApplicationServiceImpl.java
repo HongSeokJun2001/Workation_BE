@@ -40,15 +40,32 @@ public class ApplicationServiceImpl implements ApplicationService{
 	@Transactional(readOnly = true)
 	public Page<Application> getApplicationList(Pageable pageable) {
 		
-		return applicationDao.findByProgressStatus("APPLY", pageable);
+		return applicationDao.findAllByOrderByWorkationIdDesc(pageable);
 	}
 	
 	@Override
 	@Transactional(readOnly = true)
-	public ApplicationDetail getApplicationDetail(int applicationId) {
+	public Page<Application> getApplicationMemberList(Pageable pageable) {
 		
-		Application application = applicationDao.findByWorkationId(applicationId)
-	            .orElseThrow(() -> new IllegalArgumentException("해당 신청 내역을 찾을 수 없습니다. id=" + applicationId));
+		return applicationDao.findAllByOrderByWorkationIdDesc(pageable);
+	}
+	
+	@Override
+	@Transactional(readOnly = true)
+	public ApplicationDetail getApplicationDetail(int workationId) {
+		
+		Application application = applicationDao.findByWorkationId(workationId)
+	            .orElseThrow(() -> new IllegalArgumentException("해당 신청 내역을 찾을 수 없습니다. id=" + workationId));
+		
+		return new ApplicationDetail(application);
+	}
+	
+	@Override
+	@Transactional(readOnly = true)
+	public ApplicationDetail getApplicationMemberDetail(int workationId) {
+		
+		Application application = applicationDao.findByWorkationId(workationId)
+	            .orElseThrow(() -> new IllegalArgumentException("해당 신청 내역을 찾을 수 없습니다. id=" + workationId));
 		
 		return new ApplicationDetail(application);
 	}
@@ -112,7 +129,7 @@ public class ApplicationServiceImpl implements ApplicationService{
 	    
 	    Progress progress = progressDao.findById(workationId)
 	            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 신청 건입니다."));
-	    progress.setStatus("CANCEL");
+	    progress.setStatus("CANCELLED");
 	    
 	    Approval approval = new Approval();
 	    approval.setWorkationId(workationId);

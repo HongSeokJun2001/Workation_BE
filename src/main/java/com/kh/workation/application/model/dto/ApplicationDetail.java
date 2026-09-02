@@ -24,6 +24,13 @@ public class ApplicationDetail {
 
     private String purpose;
     
+    private String status;
+    
+    private String rejectReason;
+    private String approvedYn;
+    
+    private String cancelledReason;
+    
     // Entity(Application) -> DTO 변환 생성자
     public ApplicationDetail(Application a) {
         this.workationId = a.getWorkationId();
@@ -47,6 +54,21 @@ public class ApplicationDetail {
         if (a.getFacility() != null) {
             this.facilityName = a.getFacility().getFacilityName();
             this.region = a.getFacility().getRegion();
+        }
+        
+        // 예약 상태 세팅
+        if (a.getProgress() != null) {
+        	this.status = a.getProgress().getStatus();
+        }
+        
+        // 예약 승인 세팅
+        if (a.getApproval() != null) {
+        	this.rejectReason = a.getApproval().getRejectReason();
+        	this.approvedYn = a.getApproval().getApprovedYn();
+        }
+        
+        if (a.getReservation() != null) {
+        	this.cancelledReason = a.getReservation().getCancelledReason();
         }
     }
 

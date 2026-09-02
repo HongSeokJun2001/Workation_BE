@@ -60,4 +60,7 @@ public class Reservation {
 	
 	@Column(name="CANCELLED_DATE")
 	private LocalDate cancelledDate;
+	
+	@Column(name="CANCELLED_REASON", length = 900)
+	private String cancelledReason;
 }
