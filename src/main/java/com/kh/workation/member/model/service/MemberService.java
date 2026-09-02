@@ -9,6 +9,9 @@ import com.kh.workation.member.model.dto.AdminDetailResponse;
 import com.kh.workation.member.model.dto.AdminListResponse;
 import com.kh.workation.member.model.dto.AdminUpdateRequest;
 import com.kh.workation.member.model.dto.CompanyAdminCreateRequest;
+import com.kh.workation.member.model.dto.CompanyCreateRequest;
+import com.kh.workation.member.model.dto.CompanyResponse;
+import com.kh.workation.member.model.dto.CompanyUpdateRequest;
 import com.kh.workation.member.model.dto.SuperAdminCreateRequest;
 import com.kh.workation.member.model.vo.Company;
 import com.kh.workation.member.model.dto.EmployeeDetailResponse;
@@ -28,6 +31,14 @@ public interface MemberService {
     Page<AdminListResponse> selectCompanyAdminPage(String status, Long companyId, Pageable pageable);
 
     List<Company> selectActiveCompanyList();
+
+    Page<CompanyResponse> selectCompanyPage(String status, Pageable pageable);
+
+    CompanyResponse selectCompanyDetail(Long companyId);
+
+    CompanyResponse createCompany(CompanyCreateRequest request);
+
+    CompanyResponse updateCompany(Long companyId, CompanyUpdateRequest request);
 
     List<Employee> selectEmployeeList(String status, String isProgressed, Long companyId);
 
@@ -54,6 +65,8 @@ public interface MemberService {
     EmployeeDetailResponse updateEmployee(Long employeeId, Long companyId, EmployeeUpdateRequest request);
 
     EmployeeDetailResponse approveEmployee(Long employeeId, Long companyId);
+
+    void rejectEmployee(Long employeeId, Long companyId);
 
     EmployeeDetailResponse updateEmployeeSelf(String loginId, Long companyId, EmployeeUpdateRequest request);
 

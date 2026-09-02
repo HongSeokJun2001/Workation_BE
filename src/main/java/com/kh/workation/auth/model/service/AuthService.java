@@ -26,4 +26,5 @@ public interface AuthService {
 	
 	
 
+	Long getAdminId(String token);
 }

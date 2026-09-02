@@ -7,7 +7,7 @@ import lombok.Setter;
 @Setter
 public class EmployeeFindIdRequest {
 
-    private Long empNo;
+    private String companyName;
     private String employeeName;
     private String phone;
     private String email;

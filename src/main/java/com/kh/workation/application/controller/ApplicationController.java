@@ -2,6 +2,7 @@ package com.kh.workation.application.controller;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -95,4 +97,39 @@ public class ApplicationController {
 		return ResponseEntity.status(HttpStatus.OK)
 				 .body(message);
 	}
+	
+	@PutMapping("/application/approve/{workationId}")
+	public ResponseEntity<String> approveApplication(@PathVariable("workationId") int workationId, HttpServletRequest request) {
+		
+		String authHeader = request.getHeader("Authorization");
+		
+		String token = authHeader.substring(7);
+	    Long adminId = authService.getAdminId(token);
+		
+	    Application a = applicationService.approveApplication(workationId, adminId);
+	    
+	    String message = (a != null) ? "success" : "fail";
+	    
+	    return ResponseEntity.status(HttpStatus.OK)
+				 .body(message);
+	}
+	
+	@PutMapping("/application/cancel/{workationId}")
+	public ResponseEntity<String> cancelApplication(@PathVariable("workationId") int workationId,@RequestBody Map<String, String> body, HttpServletRequest request) {
+		
+		String authHeader = request.getHeader("Authorization");
+		
+		String token = authHeader.substring(7);
+	    Long adminId = authService.getAdminId(token);
+	    String reason = body.get("reason");
+		
+	    Application a = applicationService.cancelApplication(workationId, adminId, reason);
+	    
+	    String message = (a != null) ? "success" : "fail";
+	    
+	    return ResponseEntity.status(HttpStatus.OK)
+				 .body(message);
+	}
+	
 }
+

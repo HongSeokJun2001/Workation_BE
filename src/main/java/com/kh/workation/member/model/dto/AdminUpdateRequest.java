@@ -9,6 +9,9 @@ import lombok.Setter;
 @Schema(description = "관리자 계정 수정 요청 DTO")
 public class AdminUpdateRequest {
 
+    @Schema(description = "소속 회사 번호. 최고관리자가 본사관리자 계정을 수정할 때만 변경 가능", example = "1", nullable = true)
+    private Long companyId;
+
     @Schema(description = "로그인 아이디", example = "companyadmin01")
     private String loginId;
 

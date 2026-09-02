@@ -13,8 +13,9 @@ import com.kh.workation.application.model.dto.ApplicationDetail;
 import com.kh.workation.application.model.vo.Application;
 import com.kh.workation.application.model.vo.Approval;
 import com.kh.workation.application.model.vo.Progress;
-import com.kh.workation.member.model.vo.Company;
+import com.kh.workation.reservation.model.dao.ReservationDao;
 import com.kh.workation.reservation.model.dao.ReservationDateDao;
+import com.kh.workation.reservation.model.vo.Reservation;
 import com.kh.workation.reservation.model.vo.ReservationDate;
 
 @Service
@@ -31,6 +32,9 @@ public class ApplicationServiceImpl implements ApplicationService{
     
     @Autowired
     private ProgressDao progressDao;
+    
+    @Autowired
+    private ReservationDao reservationDao;
 	
 	@Override
 	@Transactional(readOnly = true)
@@ -70,6 +74,55 @@ public class ApplicationServiceImpl implements ApplicationService{
 
         return savedApp;
     }
+	
+	@Override
+	@Transactional
+	public Application approveApplication(int workationId, Long adminId) {
+		
+		Application app = applicationDao.findById(workationId)
+	            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 신청 건입니다."));
+		
+		Progress progress = progressDao.findById(workationId)
+				.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 신청 건입니다."));
+		progress.setStatus("CONFIRM");                        
+        
+        Reservation reservation = new Reservation();
+        reservation.setApplication(app);
+        reservation.setFacility(app.getFacility());
+        reservation.setReservationDate(app.getReservationDate());
+        reservation.setStatus("RESERVED");
+
+        reservationDao.save(reservation);
+        
+        Approval approval = new Approval();
+        approval.setWorkationId(workationId);
+        approval.setAdminId(adminId);
+        approval.setApprovedYn("APPROVED");        
+        approvalDao.save(approval);
+		
+        return app;
+	}
+	
+	@Override
+	@Transactional
+	public Application cancelApplication(int workationId, Long adminId, String reason) {
+	    
+	    Application app = applicationDao.findById(workationId)
+	            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 신청 건입니다."));
+	    
+	    Progress progress = progressDao.findById(workationId)
+	            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 신청 건입니다."));
+	    progress.setStatus("CANCEL");
+	    
+	    Approval approval = new Approval();
+	    approval.setWorkationId(workationId);
+	    approval.setAdminId(adminId);
+	    approval.setApprovedYn("REJECT");
+	    approval.setRejectReason(reason);
+	    approvalDao.save(approval);
+	    
+	    return app;
+	}
 	
 	
 }

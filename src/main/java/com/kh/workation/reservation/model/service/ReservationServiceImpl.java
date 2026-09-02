@@ -4,8 +4,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.kh.workation.reservation.model.dao.ReservationDao;
+import com.kh.workation.reservation.model.dto.ReservationList;
 import com.kh.workation.reservation.model.vo.Reservation;
 
 @Service
@@ -15,9 +17,12 @@ public class ReservationServiceImpl implements ReservationService{
     private ReservationDao reservationDao;
 	
 	@Override
-	public Page<Reservation> getReservationList(Pageable pageable) {
-		
-		return reservationDao.findAllByOrderByReservationIdDesc(pageable);
+	@Transactional(readOnly = true)
+	public Page<ReservationList> getReservationList(Pageable pageable) {
+	    
+	    Page<Reservation> page = reservationDao.findAllByOrderByReservationIdDesc(pageable);
+	    
+	    return page.map(ReservationList::new);
 	}
 
 }
