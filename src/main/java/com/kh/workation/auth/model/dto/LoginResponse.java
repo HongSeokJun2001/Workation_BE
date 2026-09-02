@@ -17,4 +17,5 @@ public class LoginResponse {
 
 	@Schema(description = "로그인한 사용자의 권한", example = "SUPER")
     private String role;
+
 }

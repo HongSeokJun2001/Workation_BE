@@ -202,4 +202,27 @@ public class AuthServiceImpl implements AuthService {
                 .signWith(signingKey, SignatureAlgorithm.HS256)
                 .compact();
     }
+    
+    
+    //employee 롤만 크루 글 작성 신청 삭제 수정 가능
+    @Override
+    public boolean isEmployeeToken(String token) {
+        try {
+            Claims claims = Jwts.parserBuilder()
+                    .setSigningKey(signingKey)
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+
+            return Admin.ROLE_EMPLOYEE.equals(
+                    claims.get("role", String.class)
+            );
+
+        } catch (Exception e) {
+            return false;
+        }
+    }
+    
+    
+    
 }

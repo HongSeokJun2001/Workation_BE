@@ -32,13 +32,15 @@ public interface CrewService {
 	int deleteCrew(int crewId);
 	
 	// 크루 신청
-	CrewMemberHist joinCrew(CrewMemberHist cm);
+	CrewMemberHist joinCrew(int crewId, String loginId);
 
 	// 내가 신청한 크루 조회
-	List<CrewMemberHist> selectMyCrewList(Long employeeId);
+	List<CrewMemberHist> selectMyCrewList(String loginId);
 
 	// 크루 탈퇴
-	int leaveCrew(Long employeeId, int crewId);
+	int leaveCrew(int crewId, String loginId);
+	
+	
 	
 	// * 워케이션 신청용
 	List<Crew> getLeaderCrews(String loginId);

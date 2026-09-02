@@ -17,9 +17,11 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.kh.workation.auth.model.service.AuthService;
 import com.kh.workation.common.model.vo.PageInfo;
 import com.kh.workation.common.template.Pagination;
 import com.kh.workation.member.model.vo.Admin;
@@ -30,7 +32,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import jakarta.servlet.http.HttpServletRequest;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 
 @CrossOrigin
 @RestController
@@ -39,7 +41,37 @@ public class NoticeController {
 	
 	@Autowired
 	private NoticeService noticeService;
+
+	@Autowired
+	private AuthService authService;
 	
+	// JWT 인증 공동 처리 
+	private String getToken(String authHeader) {
+
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return null;
+        }
+
+        String token = authHeader.substring(7);
+
+        return authService.isValidToken(token) ? token : null;
+    }
+
+
+    // SUPER_ADMIN 권한 확인
+    private boolean isSuperAdmin(String token) {
+        return token != null && authService.isSuperAdminToken(token);
+    }
+
+    // 모든 인증된 사용자 조회 가능
+    private boolean hasAnyAuthUser(String token) {
+        return token != null && authService.isValidToken(token);
+    }
+    
+    // 401 = 너 누구야?
+    // 403 = 너인 건 알겠는데 이 기능은 못 써.
+	
+    
 	@Operation(summary="공지사항 전체목록 조회(페이징)", description="페이지 번호(cpage)에 해당하는 공지사항 목록을 조회합니다."
 													+ "응답 : {list : 공지사항목록, pi :페이지 정보}")
 	@ApiResponse(responseCode="200", description="조회성공",
@@ -62,17 +94,23 @@ public class NoticeController {
 										""")))
 	@GetMapping("/notices")
 	public ResponseEntity<HashMap<String,Object>> selectNoticeList(
-			@RequestParam(value="cpage", defaultValue="1")int currentPage){
-		
-//		ArrayList<Notice> list = (ArrayList)noticeService.selectNoticeList();
-		
+			@RequestParam(value="cpage", defaultValue="1")int currentPage,
+			@RequestHeader(value = "Authorization", required = false) String authHeader){
+		// JWT가 없거나 유효하지 않으면 조회 불가
+		String token = getToken(authHeader);
+
+        if (!hasAnyAuthUser(token)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+        }
+        
+        
 		// 사용자가 요청한 currentPage 는 매개변수로 받아온 상태!!
 				// + boardLimit(한 페이지당 몇개씩 보여질건지), pageLimit(페이징바 숫자 갯수) 만 마저 셋팅
 				int boardLimit = 5;
 				int pageLimit = 5;
 				
 				// > 위의 값들을 가지고 Pageable 객체를 먼저 셋팅
-				Pageable pageable = PageRequest.of(currentPage - 1, 5);
+				Pageable pageable = PageRequest.of(currentPage - 1, boardLimit);
 				
 				// > 위에서 셋팅한 Pageable 객체를 넘기면서 실제 목록을 조회해오기 (구간별로)
 				//   이 때, 조회된 결과는 Page 객체로 받아온다!!
@@ -95,79 +133,79 @@ public class NoticeController {
 				
 				return ResponseEntity.status(HttpStatus.OK)
 									 .body(hm);
-			
-		
-		//return ResponseEntity.status(HttpStatus.OK).body(list);
-		
+					
 	}
 	
-//	@Operation(summary="공지사항 작성", description="공시자항을 작성합니다. JWT토큰에 작성자정보를 추출하므로 로그인이 필요합니다.")
-//	@ApiResponse(responseCode="200", description="body 로 ssucess/fail 응답")
-//	@SecurityRequirement(name="JWT")
+	@Operation(summary="공지사항 작성", description="공시자항을 작성합니다. JWT토큰에 작성자정보를 추출하므로 로그인이 필요합니다.")
+	@ApiResponse(responseCode="200", description="body 로 success/fail 응답")
+	@SecurityRequirement(name="JWT")
 	@PostMapping("/notices")
-	public ResponseEntity<String> insertNotice(@RequestBody Notice n, HttpServletRequest request){
+	public ResponseEntity<String> insertNotice(@RequestBody Notice n,
+										@RequestHeader(value = "Authorization", required = false) String authHeader){
 		
-//		// System.out.println(n);
-//				// > 작성자의 아이디가 안들어가있음!!
-//				
-//				// request 객체를 매개변수로 추가했고, 여기서부터 현재 로그인한 회원의 정보를 알아내기!!
-//				// URL 요청의 Header 에 Authorization 으로 "Bearer xxxxx.xxxxxxx.xxxx" 를 넣어뒀음
-//				// > 기존 인터셉터의 검증용 코드와 동일
-//				String authHeader = request.getHeader("Authorization");
-//				
-//				// > 인터셉터에서 이미 검증을 거쳐왔기 때문에 중첩 if문 사용 X
-//				//   그냥 바로 뽑아서 쓰면 된다!!
-//				String jwtTokenString = authHeader.substring(7);
-//				// > "xxxxx.xxxxxxx.xxxx"
-//				
-//				// 위의 jwtTokenString 을 파싱하기
-//				Key key = Keys.hmacShaKeyFor(
-//								AuthController.SECRET_KEY.getBytes(StandardCharsets.UTF_8));
-//				
-//				Claims claims = Jwts.parserBuilder()
-//									.setSigningKey(key)
-//									.build()
-//									.parseClaimsJws(jwtTokenString)
-//									.getBody();
-//				
-//				String userId = claims.getSubject();
-//				
-//				// System.out.println(userId);
-//				
-//				// 이 아이디값을 가지고 MemberService 를 호출해서 해당 회원의 정보를 Member 객체로 받아와야함
-//				Member m = memberService.selectMember(userId);
-//				
-//				// System.out.println(m);
-//				
-//				// n 의 member 필드에 m 을 셋팅 (setter)
-//				n.setMember(m);
-//				
-//				// 현재시간이 담겨있는 컬럼에 not null 제약조건이 걸려있다면?
-//				n.setCreateDate(LocalDateTime.now());
-						
-				// XSS 공격 방지 처리 - 공통 코드 작업 참고
-				//admin객체 우선 주입 
-				Admin tempAdmin = new Admin();
-			    tempAdmin.setAdminId(3L);
-			    n.setAdmin(tempAdmin);
-				
-				Notice insertNo = noticeService.insertNotice(n);
-				
-				String message = (insertNo != null) ? "success" : "fail";
-				
-				return ResponseEntity.status(HttpStatus.OK)
-									 .body(message);
-		
-			
-			}
+		String token = getToken(authHeader);
+
+        // 로그인하지 않았거나 JWT가 유효하지 않은 경우
+        if (token == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("fail");
+        }
+
+        // SUPER_ADMIN이 아닌 경우
+        if (!isSuperAdmin(token)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("fail");
+        }
+
+        // 요청 데이터 확인
+        if (n == null ||
+            n.getNoticeTitle() == null || n.getNoticeTitle().isBlank() ||
+            n.getNoticeContent() == null || n.getNoticeContent().isBlank()) {
+
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("fail");
+        }
+
+        // 기본값 설정
+        if (n.getStatus() == null || n.getStatus().isBlank()) {
+            n.setStatus("Y");
+        }
+
+        if (n.getCreateDate() == null) {
+            n.setCreateDate(LocalDateTime.now());
+        }
+
+        if (n.getUpdateDate() == null) {
+            n.setUpdateDate(LocalDateTime.now());
+        }
+
+        // 하드코딩된 관리자 ID
+        // TODO: JWT의 loginId로 실제 Admin을 조회해서 넣어야 함
+        /*
+        Admin tempAdmin = new Admin();
+        tempAdmin.setAdminId(1L);
+        n.setAdmin(tempAdmin);
+        */
+
+        Notice result = noticeService.insertNotice(n);
+
+        return ResponseEntity.ok(result != null ? "success" : "fail");
+	}
+	
 	
 	//공지사항 상세 조회용 컨트롤러
+	// 모든 로그인 사용자가 조회 가능 
 	@GetMapping("/notices/{noticeId}")
-	public ResponseEntity<Notice> selectNotice(@PathVariable("noticeId") int noticeId){
+	public ResponseEntity<Notice> selectNotice(@PathVariable("noticeId") int noticeId,
+			@RequestHeader(value = "Authorization", required = false) String authHeader){
 		
+		String token = getToken(authHeader);
+
+        if (!hasAnyAuthUser(token)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+        }
+        
 		int result = noticeService.increaseCount(noticeId);
 		
 		if(result > 0) {
+			
 			Notice n = noticeService.selectNotice(noticeId);
 			
 			return ResponseEntity.status(HttpStatus.OK).body(n);
@@ -181,46 +219,75 @@ public class NoticeController {
 	}
 	
 	
-	//공지사항 수정용 컨트럴
+	// 공지사항 수정용 컨트롤러
+	// SUPER_ADMIN 만 가능
 	@PutMapping("/notices/{noticeId}")
 	public ResponseEntity<String> updateNotice(@PathVariable("noticeId") int noticeId,
-											@RequestBody Notice n){
-		if (n == null) {
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("fail");
-		}
-		n.setNoticeId(noticeId);
-		if (n.getStatus() == null || n.getStatus().isBlank()) {
-			n.setStatus("Y");
-		}
-		if (n.getUpdateDate() == null) {
-			n.setUpdateDate(LocalDateTime.now());
-		}
-		if (n.getAdmin() == null) {
-			Admin tempAdmin = new Admin();
-			tempAdmin.setAdminId(1L);
-			n.setAdmin(tempAdmin);
-		}
-		if (n.getNoticeTitle() == null || n.getNoticeTitle().isBlank()) {
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("fail");
-		}
-		if (n.getNoticeContent() == null || n.getNoticeContent().isBlank()) {
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("fail");
-		}
+											@RequestBody Notice n,
+											@RequestHeader(value = "Authorization", required = false) String authHeader){
 		
-		Notice updateNo = noticeService.updateNotice(n);
-		String message = (updateNo != null)? "success" : "fail";
-		return ResponseEntity.status(HttpStatus.OK).body(message);
+		String token = getToken(authHeader);
+
+        if (token == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("fail");
+        }
+
+        if (!isSuperAdmin(token)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("fail");
+        }
+
+        if (n == null ||
+            n.getNoticeTitle() == null || n.getNoticeTitle().isBlank() ||
+            n.getNoticeContent() == null || n.getNoticeContent().isBlank()) {
+
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("fail");
+        }
+
+        n.setNoticeId(noticeId);
+
+        if (n.getStatus() == null || n.getStatus().isBlank()) {
+            n.setStatus("Y");
+        }
+
+        n.setUpdateDate(LocalDateTime.now());
+
+        // 하드코딩된 관리자 ID
+        // TODO: JWT의 loginId로 실제 Admin을 조회해서 넣어야 함
+        /*
+        if (n.getAdmin() == null) {
+            Admin tempAdmin = new Admin();
+            tempAdmin.setAdminId(1L);
+            n.setAdmin(tempAdmin);
+        }
+        */
+
+        Notice result = noticeService.updateNotice(n);
+
+        return ResponseEntity.ok(result != null ? "success" : "fail");
 	}
 	
 	//공지사항 삭제용 컨트롤러
+	// SUPER_ADMIN만 가능
 	@DeleteMapping("/notices/{noticeId}")
-	public ResponseEntity<String> deleteNotice(@PathVariable("noticeId") int noticeId){
+	public ResponseEntity<String> deleteNotice(@PathVariable("noticeId") int noticeId,
+										@RequestHeader(value = "Authorization", required = false) String authHeader){
+		
+		
+		String token = getToken(authHeader);
+
+        if (token == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("fail");
+        }
+
+        if (!isSuperAdmin(token)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("fail");
+        }
 		
 		int result = noticeService.deleteNotice(noticeId);
-		
 		String message = (result > 0) ? "success" : "fail";
-		
 		return ResponseEntity.status(HttpStatus.OK).body(message);
+		
+		
 	}
 	
 	

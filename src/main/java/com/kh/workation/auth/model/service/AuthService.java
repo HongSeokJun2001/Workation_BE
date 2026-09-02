@@ -19,5 +19,12 @@ public interface AuthService {
 
 	String getLoginId(String token);
 	
+	// employee 인지 확인 
+	boolean isEmployeeToken(String token);
+	
+	
+	
+	
+
 	Long getAdminId(String token);
 }
