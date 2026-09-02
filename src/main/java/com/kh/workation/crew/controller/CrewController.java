@@ -82,6 +82,8 @@ public class CrewController {
 
         return loginId.equals(crew.getEmployee().getLoginId());
     }
+    
+    
 	
 	
 	// 크루 리스트 전체 조회
@@ -245,24 +247,44 @@ public class CrewController {
 	public ResponseEntity<String> updateCrew(@PathVariable("crewId")int crewId, @RequestBody Crew c,
 										HttpServletRequest request,
 										@RequestHeader(value = "Authorization", required = false) String authHeader){
-		String token = getToken(authHeader);
+		 String token = getToken(authHeader);
 
-        if (token == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("fail");
-        }
+	    // JWT가 없는 경우
+	    if (token == null) {
+	        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("fail");
+	    }
 
-        Crew existingCrew = crewService.selectCrew(crewId);
-        if (!isSuperAdmin(token) && !isCrewLeader(token, existingCrew)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("fail");
-        }
+	    // 기존 Crew 조회
+	    Crew existingCrew = crewService.selectCrew(crewId);
 
-        if (c == null) {
-            return ResponseEntity.badRequest().body("fail");
-        }
+	    // 존재하지 않는 Crew
+	    if (existingCrew == null) {
+	        return ResponseEntity.notFound().build();
+	    }
 
-        c.setCrewId(crewId);
-        if (c.getEmployee() == null && existingCrew != null) {
-            c.setEmployee(existingCrew.getEmployee());
+	    // 관리자도 아니고 해당 Crew 작성자도 아닌 경우
+	    if (!isSuperAdmin(token) && !isCrewLeader(token, existingCrew)) {
+	        return ResponseEntity.status(HttpStatus.FORBIDDEN).body("fail");
+	    }
+
+	    // 수정 데이터가 없는 경우
+	    if (c == null) {
+	        return ResponseEntity.badRequest().body("fail");
+	    }
+
+	    // URL의 crewId를 사용
+	    c.setCrewId(crewId);
+
+	    // 작성자 정보는 기존 데이터 유지
+	    if (c.getEmployee() == null) {
+	        c.setEmployee(existingCrew.getEmployee());
+	    }
+
+	    // 수정
+        Crew updateCr = crewService.updateCrew(c);
+        return ResponseEntity.ok(updateCr != null ? "success" : "fail");
+        
+        
         }
 	// 해당 Crew의 작성자만 가능
 	
@@ -272,13 +294,33 @@ public class CrewController {
 		
 		String token = getToken(authHeader);
 
-        if (token == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("fail");
-        }
+	    // JWT가 없는 경우
+	    if (token == null) {
+	        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("fail");
+	    }
 
-        Crew existingCrew = crewService.selectCrew(crewId);
-        if (!isSuperAdmin(token) && !isCrewLeader(token, existingCrew)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("fail");
+	    // 기존 Crew 조회
+	    Crew existingCrew = crewService.selectCrew(crewId);
+
+	    // 존재하지 않는 Crew
+	    if (existingCrew == null) {
+	        return ResponseEntity.notFound().build();
+	    }
+
+	    // 관리자도 아니고 해당 Crew 작성자도 아닌 경우
+	    if (!isSuperAdmin(token) && !isCrewLeader(token, existingCrew)) {
+	        return ResponseEntity.status(HttpStatus.FORBIDDEN).body("fail");
+	    }
+
+	    // 삭제
+	    int result = crewService.deleteCrew(crewId);
+        return ResponseEntity.ok(result > 0 ? "success" : "fail");
+            		
+            		
+	}      		
+            		
+            		
+            		
 	@PostMapping("/crews/{crewId}/join")
 	public ResponseEntity<String> joinCrew(@PathVariable int crewId,
 											HttpServletRequest request,
@@ -319,6 +361,11 @@ public class CrewController {
         }
 
         // 로그인한 직원의 loginId를 JWT에서 가져옴
+        if (!authService.isEmployeeToken(token)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
+        }
+        
+        
         String loginId = authService.getLoginId(token);
 
         return ResponseEntity.ok(
