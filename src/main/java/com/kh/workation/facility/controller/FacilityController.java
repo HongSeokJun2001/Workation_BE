@@ -44,7 +44,7 @@ import lombok.extern.slf4j.Slf4j;
 public class FacilityController {
 	
 	// application.properties에서 업로드 경로 설정 주입
-	@Value("${file.upload-dir:C:/Final_Project/Workation_BE/uploads}")
+	@Value("${file.upload-dir}")
 	private String uploadDir;
 	
 	private final FacilityService facilityService;
@@ -181,8 +181,7 @@ public class FacilityController {
 															  @Parameter(description = "새로 추가할 시설 이미지 파일 목록")
 															  @RequestParam(value = "upfiles", required = false) MultipartFile[] upfiles) {
 		log.info("시설 수정 요청 (PUT) - ID: {}, Name: {}", facilityId, updateDto.getFacilityName());
-		String savePath = "C:/Final_Project/Workation_BE/uploads/";
-		FacilityResponseDto result = facilityService.updateFacility(facilityId, updateDto, upfiles, savePath);
+		FacilityResponseDto result = facilityService.updateFacility(facilityId, updateDto, upfiles, uploadDir);
 		return ResponseEntity.ok(result);
 	}
 	
