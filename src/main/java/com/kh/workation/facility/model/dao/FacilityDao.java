@@ -25,6 +25,9 @@ public interface FacilityDao extends JpaRepository<Facility, Long> {
     @Query("SELECT f FROM Facility f WHERE f.status = 'ACTIVE' AND (:region = 'ALL' OR f.region = :region) ORDER BY f.createdDate ASC")
     Page<Facility> findAllActiveFacilitiesAsc(@Param("region") String region, Pageable pageable);
 
+    @Query("SELECT COUNT(f) FROM Facility f WHERE f.status = 'ACTIVE'")
+    long countActiveFacilities();
+
     // 3. ACTIVE 검색 - 최신순
     @EntityGraph(attributePaths = {"imageList"})
     @Query("SELECT f FROM Facility f WHERE f.status = 'ACTIVE' AND (:region = 'ALL' OR f.region = :region) AND (f.facilityName LIKE %:keyword% OR f.region LIKE %:keyword%) ORDER BY f.createdDate DESC")

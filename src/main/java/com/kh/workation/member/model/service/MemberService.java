@@ -74,6 +74,8 @@ public interface MemberService {
 
     boolean existsEmployeeLoginId(String loginId);
 
+    long countActiveCompanies();
+
     Employee signupEmployee(EmployeeSignupRequest request);
 
 }

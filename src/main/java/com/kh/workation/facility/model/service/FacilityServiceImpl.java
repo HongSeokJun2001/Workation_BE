@@ -226,4 +226,10 @@ public class FacilityServiceImpl implements FacilityService{
 	            .map(FacilityResponseDto::fromEntity)
 	            .collect(Collectors.toList());
 	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public long countActiveFacilities() {
+		return facilityDao.countActiveFacilities();
+	}
 }

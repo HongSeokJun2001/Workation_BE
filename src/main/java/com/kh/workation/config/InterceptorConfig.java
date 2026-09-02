@@ -25,11 +25,20 @@ public class InterceptorConfig implements WebMvcConfigurer {
 
 		// 로그인 사용자 전용 기능이 생기면 해당 경로를 명시적으로 등록한다.
 		registry.addInterceptor(loginInterceptor)
-		        .addPathPatterns("/lobby/**")
+		        .addPathPatterns(
+		        		"/application/insert",
+		        		"/crews/leader",
+		        		"/crews/*/join",
+		        		"/crews/mylist/**",
+		        		"/reservation/**",
+		        		"/employee/my-info")
 		        .excludePathPatterns("/auth/**", "/public/**", "/admin/**");
 		
 		registry.addInterceptor(authInterceptor)
-			    .addPathPatterns("/admin/**")
+			    .addPathPatterns(
+			    		"/admin/**",
+			    		"/application/approve/**",
+			    		"/application/cancel/**")
 			    .excludePathPatterns("/auth/**", "/public/**"); 
 		// > "/admin" 계열의 모든 요청은 (/**)
 		//   이 AuthInterceptor 를 거쳐가고,
