@@ -1,6 +1,7 @@
 package com.kh.workation.crew.model.service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,9 +31,11 @@ public class CrewServiceImpl implements CrewService{
 	
 	
 	@Override
-	public Page<Crew> selectCrewList(Pageable pageable) {
-		
-		return crewDao.findByStatusOrderByCrewIdDesc("Y", pageable);
+	public Page<Crew> selectCrewList(Pageable pageable, String sort) {
+		if ("deadline".equals(sort)) {
+			return crewDao.findByStatusOrderByEndDateAscCrewIdDesc("Y", pageable);
+		}
+		return crewDao.findByStatusOrderByCreatedDateDescCrewIdDesc("Y", pageable);
 	}
 	
 	public Crew selectCrew(int crewId) {
@@ -40,16 +43,29 @@ public class CrewServiceImpl implements CrewService{
 		return crewDao.findById(crewId).orElse(null);
 	}
 	
-	public Page<Crew> searchCrewList(String keyword, Pageable pageable){
-		return crewDao.findByCrewNameContainingAndStatusOrderByCrewIdDesc(keyword,"Y", pageable);
+	public Page<Crew> searchCrewList(String keyword, Pageable pageable, String sort){
+		if ("deadline".equals(sort)) {
+			return crewDao.findByCrewNameContainingAndStatusOrderByEndDateAscCrewIdDesc(keyword, "Y", pageable);
+		}
+		return crewDao.findByCrewNameContainingAndStatusOrderByCreatedDateDescCrewIdDesc(keyword, "Y", pageable);
 	}
 	
 	
 	@Transactional
 	@Override
-	public Crew insertCrew(Crew c) {
-		
-		return crewDao.save(c);
+	public Crew insertCrew(Crew c, String loginId) {
+		Employee employee = employeeDao
+				.findByLoginIdAndStatus(loginId, Employee.STATUS_ACTIVE)
+				.orElse(null);
+
+		if (employee == null) {
+			return null;
+		}
+
+		c.setEmployee(employee);
+		Crew savedCrew = crewDao.save(c);
+		joinCrew(savedCrew.getCrewId(), loginId);
+		return savedCrew;
 		
 	}
 	
@@ -65,6 +81,9 @@ public class CrewServiceImpl implements CrewService{
 	public int deleteCrew(int crewId) {
 		return crewDao.deleteCrew(crewId);
 	}
+	
+
+
 	
 	//------------------------------------------------------
 
@@ -107,6 +126,11 @@ public class CrewServiceImpl implements CrewService{
 	public List<CrewMemberHist> selectMyCrewList(String loginId) {
 		return crewMemberHistDao.findMyCrewList(loginId, "ACTIVE");
 	}
+
+	@Override
+	public ArrayList<String> selectCrewMemberNames(int crewId) {
+		return crewMemberHistDao.findActiveEmployeeNamesByCrewId(crewId);
+	}
 	
 	
 	
@@ -120,6 +144,9 @@ public class CrewServiceImpl implements CrewService{
 	            LocalDateTime.now()
 	    );
 	}
+
+
+
 
 	
 	
