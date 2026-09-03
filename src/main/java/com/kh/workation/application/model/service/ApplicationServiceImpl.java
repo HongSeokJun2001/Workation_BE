@@ -10,6 +10,7 @@ import com.kh.workation.application.model.dao.ApplicationDao;
 import com.kh.workation.application.model.dao.ApprovalDao;
 import com.kh.workation.application.model.dao.ProgressDao;
 import com.kh.workation.application.model.dto.ApplicationDetail;
+import com.kh.workation.application.model.dto.ApplicationList;
 import com.kh.workation.application.model.vo.Application;
 import com.kh.workation.application.model.vo.Approval;
 import com.kh.workation.application.model.vo.Progress;
@@ -38,16 +39,26 @@ public class ApplicationServiceImpl implements ApplicationService{
 	
 	@Override
 	@Transactional(readOnly = true)
-	public Page<Application> getApplicationList(Pageable pageable) {
+	public Page<ApplicationList> getApplicationList(Pageable pageable, Long companyId) {
 		
-		return applicationDao.findAllByOrderByWorkationIdDesc(pageable);
+		Page<Application> page;
+		
+		if(companyId == null) {
+			page = applicationDao.findAllByOrderByWorkationIdDesc(pageable);
+		} else {
+			page = applicationDao.findByCompanyCompanyIdOrderByWorkationIdDesc(companyId, pageable);
+		}
+		
+		return page.map(ApplicationList::new);
 	}
 	
 	@Override
 	@Transactional(readOnly = true)
-	public Page<Application> getApplicationMemberList(Pageable pageable) {
+	public Page<ApplicationList> getApplicationMemberList(Pageable pageable, String loginId) {
 		
-		return applicationDao.findAllByOrderByWorkationIdDesc(pageable);
+		Page<Application> page = applicationDao.findByLoginId(loginId, pageable);
+		
+		return page.map(ApplicationList::new);
 	}
 	
 	@Override

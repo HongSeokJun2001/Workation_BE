@@ -35,6 +35,7 @@ public class ApplicationDetail {
     public ApplicationDetail(Application a) {
         this.workationId = a.getWorkationId();
         this.purpose = a.getPurpose();
+        this.region = a.getRegion();
 
         // 크루 및 크루장 이름 세팅 (Null 방어)
         if (a.getCrew() != null) {
@@ -53,7 +54,6 @@ public class ApplicationDetail {
         // 시설 및 지역 세팅
         if (a.getFacility() != null) {
             this.facilityName = a.getFacility().getFacilityName();
-            this.region = a.getFacility().getRegion();
         }
         
         // 예약 상태 세팅

@@ -4,13 +4,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import com.kh.workation.application.model.dto.ApplicationDetail;
+import com.kh.workation.application.model.dto.ApplicationList;
 import com.kh.workation.application.model.vo.Application;
 
 public interface ApplicationService {
 	
-	Page<Application> getApplicationList(Pageable pageable);
+	Page<ApplicationList> getApplicationList(Pageable pageable, Long companyId);
 	
-	Page<Application> getApplicationMemberList(Pageable pageable);
+	Page<ApplicationList> getApplicationMemberList(Pageable pageable, String loginId);
 	
 	ApplicationDetail getApplicationDetail(int workationId);
 	
