@@ -110,6 +110,7 @@ public class CrewController {
 	public ResponseEntity<HashMap<String, Object>> selectCrewList(
 													@RequestParam(value="cpage", defaultValue="1") 
 													int currentPage,
+																							@RequestParam(value="sort", defaultValue="registered") String sort,
 													@RequestHeader(value = "Authorization", required = false) String authHeader){
 		// 로그인 여부 확인
         if (getToken(authHeader) == null) {
@@ -124,7 +125,7 @@ public class CrewController {
 		Pageable pageable = PageRequest.of(currentPage -1, boardLimit);
 		
 		//페이지 객체로 받아오기
-		Page<Crew> page = crewService.selectCrewList(pageable);
+		Page<Crew> page = crewService.selectCrewList(pageable, sort);
 		
 		//Page 객체로부터 조회된 총 게시글 갯수 
 		List<Crew> list = page.getContent();
@@ -168,6 +169,7 @@ public class CrewController {
 	public ResponseEntity<HashMap<String, Object>> searchCrewList(
 													@RequestParam(value="cpage", defaultValue="1")int currentPage, 
 													@RequestParam String keyword,
+													@RequestParam(value="sort", defaultValue="registered") String sort,
 													@RequestHeader(value = "Authorization", required = false) String authHeader){
 		
 		
@@ -185,7 +187,7 @@ public class CrewController {
 		Pageable pageable = PageRequest.of(currentPage-1, boardLimit);
 		
 		// pageable 을 넘기면서 조회
-		Page<Crew> page = crewService.searchCrewList(keyword, pageable);
+		Page<Crew> page = crewService.searchCrewList(keyword, pageable, sort);
 		
 		List<Crew> list = page.getContent();
 		long searchCount = page.getTotalElements();
@@ -231,10 +233,7 @@ public class CrewController {
 
         String loginId = authService.getLoginId(token);
 
-        // TODO: loginId로 실제 Employee를 조회하여 작성자로 설정
-        // crewService.insertCrew(c, loginId);
-
-        Crew result = crewService.insertCrew(c);
+		Crew result = crewService.insertCrew(c, loginId);
 
         return ResponseEntity.ok(result != null ? "success" : "fail");
 	}
@@ -371,6 +370,20 @@ public class CrewController {
         return ResponseEntity.ok(
                 crewService.selectMyCrewList(loginId)
         );
+	}
+
+	// 크루 멤버 이름 조회
+	@GetMapping("/crews/{crewId}/members")
+	public ResponseEntity<ArrayList<String>> selectCrewMemberNames(
+			@PathVariable int crewId,
+			@RequestHeader(value = "Authorization", required = false) String authHeader) {
+
+		String token = getToken(authHeader);
+		if (token == null) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+		}
+
+		return ResponseEntity.ok(crewService.selectCrewMemberNames(crewId));
 	}
 
 	// 크루 탈퇴

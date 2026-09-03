@@ -13,16 +13,16 @@ import com.kh.workation.reply.model.vo.Reply;
 public interface CrewService {
 	
 	// 크루 리스트 조회
-	Page<Crew> selectCrewList(Pageable pageable);
+	Page<Crew> selectCrewList(Pageable pageable, String sort);
 	
 	// 크루 단건 조회
 	Crew selectCrew(int crewId);
 	
 	// 크루 검색
-	Page<Crew> searchCrewList(String keyword, Pageable pageable);
+	Page<Crew> searchCrewList(String keyword, Pageable pageable, String sort);
 	
 	// 크루 등록
-	Crew insertCrew(Crew c);
+	Crew insertCrew(Crew c, String loginId);
 	
 	// 크루 수정
 	
@@ -36,6 +36,9 @@ public interface CrewService {
 
 	// 내가 신청한 크루 조회
 	List<CrewMemberHist> selectMyCrewList(String loginId);
+
+	// 크루 멤버 이름 조회
+	ArrayList<String> selectCrewMemberNames(int crewId);
 
 	// 크루 탈퇴
 	int leaveCrew(int crewId, String loginId);

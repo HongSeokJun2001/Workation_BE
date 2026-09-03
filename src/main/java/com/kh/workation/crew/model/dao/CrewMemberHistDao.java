@@ -1,6 +1,7 @@
 package com.kh.workation.crew.model.dao;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -36,6 +37,15 @@ public interface CrewMemberHistDao extends JpaRepository<CrewMemberHist, Integer
         AND h.status = 'ACTIVE'
         """)
 	List<CrewMemberHist> findMyCrewList(@Param("loginId")String loginId, String string);
+
+    @Query("""
+        SELECT h.employee.employeeName
+        FROM CrewMemberHist h
+        WHERE h.crew.crewId = :crewId
+        AND h.status = 'ACTIVE'
+        ORDER BY h.crewMemberId
+        """)
+    ArrayList<String> findActiveEmployeeNamesByCrewId(@Param("crewId") int crewId);
 
 	
     // 크루 탈퇴
