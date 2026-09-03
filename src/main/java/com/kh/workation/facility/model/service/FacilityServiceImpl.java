@@ -97,41 +97,43 @@ public class FacilityServiceImpl implements FacilityService{
 		Facility savedFacility = facilityDao.save(facility);
 		
 		// 2) 첨부 이미지 파일 등록 처리
-		if(upfiles != null && upfiles.length > 0) {
-			File dir = new File(savePath);
-			if(!dir.exists()) {
-				dir.mkdirs(); // 디랙토리가 없는 경우 생성
-			}
-			
-			for (MultipartFile file : upfiles) {
-				if(!file.isEmpty()) {
-					String originName = file.getOriginalFilename();
-					String ext = originName.substring(originName.lastIndexOf("."));
-					String changeName = UUID.randomUUID().toString() + ext; // 파일명 중복 방지
-					
-					try {
-						
-						File destFile = new File(dir, changeName);
-						file.transferTo(destFile);
-						
-						// FacilityImage Entity 생성
-						FacilityImage facilityImage = new FacilityImage();
-						facilityImage.setOriginalName(originName);
-						facilityImage.setChangedName(changeName);
-						facilityImage.setFilePath("/uploads/" + changeName);
-						
-						// 양방향 편의 메서드로 연관관계 설정
-						savedFacility.addImage(facilityImage);
-					} catch (IOException e) {
-						throw new RuntimeException("파일 저장 실패 : " + originName, e);
-					}
-				}
-			}
-		}
-		
-		return FacilityResponseDto.fromEntity(savedFacility);
+	    if(upfiles != null && upfiles.length > 0) {
+	        
+	        // ★ 상대 경로를 현재 프로젝트 실행 절대 위치로 안전하게 계산
+	        File dir = new File(System.getProperty("user.dir"), savePath);
+	        if(!dir.exists()) {
+	            dir.mkdirs(); // 상대 경로 디렉토리가 없으면 프로젝트 루트 하위에 생성
+	        }
+	        
+	        for (MultipartFile file : upfiles) {
+	            if(!file.isEmpty()) {
+	                String originName = file.getOriginalFilename();
+	                String ext = originName.substring(originName.lastIndexOf("."));
+	                String changeName = UUID.randomUUID().toString() + ext; // 파일명 중복 방지
+	                
+	                try {
+	                    // transferTo 대신 destFile.getAbsoluteFile()로 확실한 파일 객체 전달
+	                    File destFile = new File(dir, changeName);
+	                    file.transferTo(destFile.getAbsoluteFile()); // ★ .getAbsoluteFile() 추가
+	                    
+	                    // FacilityImage Entity 생성
+	                    FacilityImage facilityImage = new FacilityImage();
+	                    facilityImage.setOriginalName(originName);
+	                    facilityImage.setChangedName(changeName);
+	                    facilityImage.setFilePath("/uploads/" + changeName);
+	                    
+	                    // 양방향 편의 메서드로 연관관계 설정
+	                    savedFacility.addImage(facilityImage);
+	                } catch (IOException e) {
+	                    throw new RuntimeException("파일 저장 실패 : " + originName, e);
+	                }
+	            }
+	        }
+	    }
+	    
+	    return FacilityResponseDto.fromEntity(savedFacility);
 	}
-
+	
 	// 5. 시설 수정 서비스
 	@Override
 	@Transactional
@@ -158,44 +160,43 @@ public class FacilityServiceImpl implements FacilityService{
 				boolean isDelete = updateDto.getDeleteImageIds().contains(image.getImageId());
 				if(isDelete) {
 					// 실제 디스크 파일 삭제 처리
-					File file = new File(savePath + image.getChangedName());
+					File file = new File(new File(System.getProperty("user.dir"), savePath), image.getChangedName());
 					if(file.exists()) {
-						file.delete();
+					    file.delete();
 					}
 				}
 				return isDelete;
 			});
 		}
 		
-		// 신규 첨부 파일 추가 업로드
+		// 신규 첨부 파일 추가 업로드 부분
 		if(upfiles != null && upfiles.length > 0) {
-			File dir = new File(savePath);
-			if(!dir.exists()) {
-				dir.mkdirs();
-			}
-			
-			for(MultipartFile file : upfiles) {
-				if(!file.isEmpty()) {
-					String originName = file.getOriginalFilename();
-					String ext = originName.substring(originName.lastIndexOf("."));
-					String changeName = UUID.randomUUID().toString() + ext;
-					
-					try {
-						File destFile = new File(dir, changeName);
-						file.transferTo(destFile);
-						
-						FacilityImage facilityImage = new FacilityImage();
-						facilityImage.setOriginalName(originName);
-						facilityImage.setChangedName(changeName);
-						facilityImage.setFilePath("/uploads/" + changeName);
-						
-						// 연관관계 편의 메서드로 저장
-						facility.addImage(facilityImage);
-					} catch(IOException e) {
-						throw new RuntimeException("파일 수정 저장 실패 : " + originName, e);
-					}
-				}
-			}
+		    File dir = new File(System.getProperty("user.dir"), savePath);
+		    if(!dir.exists()) {
+		        dir.mkdirs();
+		    }
+		    
+		    for(MultipartFile file : upfiles) {
+		        if(!file.isEmpty()) {
+		            String originName = file.getOriginalFilename();
+		            String ext = originName.substring(originName.lastIndexOf("."));
+		            String changeName = UUID.randomUUID().toString() + ext;
+		            
+		            try {
+		                File destFile = new File(dir, changeName);
+		                file.transferTo(destFile.getAbsoluteFile()); // ★ .getAbsoluteFile() 추가
+		                
+		                FacilityImage facilityImage = new FacilityImage();
+		                facilityImage.setOriginalName(originName);
+		                facilityImage.setChangedName(changeName);
+		                facilityImage.setFilePath("/uploads/" + changeName);
+		                
+		                facility.addImage(facilityImage);
+		            } catch(IOException e) {
+		                throw new RuntimeException("파일 수정 저장 실패 : " + originName, e);
+		            }
+		        }
+		    }
 		}
 		
 		return FacilityResponseDto.fromEntity(facility);
