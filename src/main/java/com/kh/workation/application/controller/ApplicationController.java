@@ -42,18 +42,20 @@ public class ApplicationController {
 
 	@GetMapping("/application/list")
 	public ResponseEntity<HashMap<String, Object>> getApplicationList(
-			@RequestParam(value="cpage", defaultValue="1") int currentPage){
+			@RequestParam(value="cpage", defaultValue="1") int currentPage, HttpServletRequest request){
+		
+		String authHeader = request.getHeader("Authorization");
+		String token = authHeader.substring(7);
+	    Long companyId = authService.getCompanyId(token);
 		
 		int pageLimit = 10;
 		int boardLimit = 10;
 		
 		Pageable pageable = PageRequest.of(currentPage - 1, boardLimit);
 		
-		Page<Application> page = applicationService.getApplicationList(pageable);
+		Page<ApplicationList> page = applicationService.getApplicationList(pageable, companyId);
 		
-		List<ApplicationList> list = page.getContent().stream()
-	            .map(ApplicationList::new)
-	            .toList();
+		List<ApplicationList> list = page.getContent(); 
 		
 		long listCount = page.getTotalElements();
 		
@@ -71,18 +73,20 @@ public class ApplicationController {
 	
 	@GetMapping("/application/member/list")
 	public ResponseEntity<HashMap<String, Object>> getApplicationMemberList(
-			@RequestParam(value="cpage", defaultValue="1") int currentPage){
+			@RequestParam(value="cpage", defaultValue="1") int currentPage, HttpServletRequest request){
+		
+		String authHeader = request.getHeader("Authorization");
+		String token = authHeader.substring(7);
+	    String loginId = authService.getLoginId(token);
 		
 		int pageLimit = 10;
 		int boardLimit = 10;
 		
 		Pageable pageable = PageRequest.of(currentPage - 1, boardLimit);
 		
-		Page<Application> page = applicationService.getApplicationMemberList(pageable);
+		Page<ApplicationList> page = applicationService.getApplicationMemberList(pageable, loginId);
 		
-		List<ApplicationList> list = page.getContent().stream()
-	            .map(ApplicationList::new)
-	            .toList();
+		List<ApplicationList> list = page.getContent(); 
 		
 		long listCount = page.getTotalElements();
 		

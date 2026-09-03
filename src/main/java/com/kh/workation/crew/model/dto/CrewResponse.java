@@ -17,6 +17,7 @@ public class CrewResponse {
     private LocalDate createDate;
     private LocalDate endDate;
     private Integer capacity;
+    private Integer workUsedDays;
     
     private Long companyId;
     private Long leaderEmployeeId;
@@ -29,6 +30,7 @@ public class CrewResponse {
         this.createDate = crew.getCreatedDate();
         this.endDate = crew.getEndDate();
         this.capacity = crew.getCapacity();
+        this.workUsedDays = crew.getWorkUsedDays();
 
         if (crew.getCompany() != null) {
             this.companyId = crew.getCompany().getCompanyId();

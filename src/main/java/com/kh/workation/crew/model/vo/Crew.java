@@ -69,7 +69,8 @@ public class Crew {
 	@Column(name="CAPACITY", nullable=false, columnDefinition="INT DEFAULT 0")
 	private Integer capacity; //정원 
 	
-	
+	@Column(name="WORK_USED_DAYS", nullable=false, columnDefinition="INT DEFAULT 1")
+	private Integer workUsedDays;
 	
 	
 	

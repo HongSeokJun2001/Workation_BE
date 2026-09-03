@@ -13,7 +13,8 @@ import lombok.NoArgsConstructor;
 public class ApplicationList {
 	
 	private Integer workationId;
-    private String leaderName;     
+    private String leaderName;
+    private String crewName;
     private LocalDate startDate;   
     private LocalDate endDate;     
     private String facilityName;   
@@ -24,11 +25,11 @@ public class ApplicationList {
     public ApplicationList(Application a) {
     	this.workationId = a.getWorkationId();
         this.createdDate = a.getCreatedDate();
-        this.status = a.getStatus();
         this.region = a.getRegion();
 
-        // 크루장
+        // 크루장, 크루이름
         if (a.getCrew() != null && a.getCrew().getEmployee() != null) {
+        	this.crewName = a.getCrew().getCrewName();
             this.leaderName = a.getCrew().getEmployee().getEmployeeName(); 
         }
 
@@ -41,6 +42,11 @@ public class ApplicationList {
         // 시설명
         if (a.getFacility() != null) {
             this.facilityName = a.getFacility().getFacilityName();
+        }
+        
+        // 워케이션 상태
+        if (a.getProgress().getStatus() != null) {
+        	this.status = a.getProgress().getStatus();
         }
     }
 
