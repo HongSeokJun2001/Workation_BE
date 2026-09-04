@@ -1,7 +1,7 @@
 package com.kh.workation.crew.model.vo;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.util.List;
 
 import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
@@ -17,6 +17,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -72,7 +73,8 @@ public class Crew {
 	@Column(name="WORK_USED_DAYS", nullable=false, columnDefinition="INT DEFAULT 1")
 	private Integer workUsedDays;
 	
-	
+	@OneToMany(mappedBy = "crew", fetch = FetchType.LAZY)
+	private List<CrewMemberHist> crewMemberHists;
 	
 
 }

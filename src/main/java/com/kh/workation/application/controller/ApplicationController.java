@@ -8,10 +8,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -21,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.kh.workation.application.model.dto.ApplicationDetail;
 import com.kh.workation.application.model.dto.ApplicationList;
+import com.kh.workation.application.model.dto.ApplicationSearch;
 import com.kh.workation.application.model.service.ApplicationService;
 import com.kh.workation.application.model.vo.Application;
 import com.kh.workation.auth.model.service.AuthService;
@@ -42,38 +45,40 @@ public class ApplicationController {
 
 	@GetMapping("/application/list")
 	public ResponseEntity<HashMap<String, Object>> getApplicationList(
-			@RequestParam(value="cpage", defaultValue="1") int currentPage, HttpServletRequest request){
-		
-		String authHeader = request.getHeader("Authorization");
-		String token = authHeader.substring(7);
+	        @RequestParam(value="cpage", defaultValue="1") int currentPage,
+	        @ModelAttribute ApplicationSearch searchDto,
+	        HttpServletRequest request) {
+	    
+	    String authHeader = request.getHeader("Authorization");
+	    String token = authHeader.substring(7);
 	    Long companyId = authService.getCompanyId(token);
-		
-		int pageLimit = 10;
-		int boardLimit = 10;
-		
-		Pageable pageable = PageRequest.of(currentPage - 1, boardLimit);
-		
-		Page<ApplicationList> page = applicationService.getApplicationList(pageable, companyId);
-		
-		List<ApplicationList> list = page.getContent(); 
-		
-		long listCount = page.getTotalElements();
-		
-		PageInfo pi = Pagination.getPageInfo((int)listCount, currentPage, 
-				pageLimit, boardLimit);
-		
-		HashMap<String, Object> hm = new HashMap<>();
-		
-		hm.put("pi", pi);
-		hm.put("list", list);
-		
-		return ResponseEntity.status(HttpStatus.OK)
-				 .body(hm);
+	    
+	    int pageLimit = 10;
+	    int boardLimit = 10;
+	    
+	    // 최신순(workationId 내림차순) 정렬 추가
+	    Pageable pageable = PageRequest.of(currentPage - 1, boardLimit, Sort.by(Sort.Direction.DESC, "workationId"));
+	    
+	    // searchDto 전달
+	    Page<ApplicationList> page = applicationService.getApplicationList(pageable, companyId, searchDto);
+	    
+	    List<ApplicationList> list = page.getContent(); 
+	    long listCount = page.getTotalElements();
+	    
+	    PageInfo pi = Pagination.getPageInfo((int)listCount, currentPage, pageLimit, boardLimit);
+	    
+	    HashMap<String, Object> hm = new HashMap<>();
+	    hm.put("pi", pi);
+	    hm.put("list", list);
+	    
+	    return ResponseEntity.status(HttpStatus.OK).body(hm);
 	}
 	
 	@GetMapping("/application/member/list")
 	public ResponseEntity<HashMap<String, Object>> getApplicationMemberList(
-			@RequestParam(value="cpage", defaultValue="1") int currentPage, HttpServletRequest request){
+			@RequestParam(value="cpage", defaultValue="1") int currentPage,
+			@ModelAttribute ApplicationSearch searchDto,
+			HttpServletRequest request){
 		
 		String authHeader = request.getHeader("Authorization");
 		String token = authHeader.substring(7);
@@ -82,9 +87,9 @@ public class ApplicationController {
 		int pageLimit = 10;
 		int boardLimit = 10;
 		
-		Pageable pageable = PageRequest.of(currentPage - 1, boardLimit);
+		Pageable pageable = PageRequest.of(currentPage - 1, boardLimit, Sort.by(Sort.Direction.DESC, "workationId"));
 		
-		Page<ApplicationList> page = applicationService.getApplicationMemberList(pageable, loginId);
+		Page<ApplicationList> page = applicationService.getApplicationMemberList(pageable, loginId, searchDto);
 		
 		List<ApplicationList> list = page.getContent(); 
 		
