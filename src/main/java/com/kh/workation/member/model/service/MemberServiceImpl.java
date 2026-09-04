@@ -556,8 +556,14 @@ public class MemberServiceImpl implements MemberService {
 	}
 
 	private void applyAdminUpdate(Admin admin, AdminUpdateRequest request, boolean allowCompanyChange) {
-		admin.setLoginId(request.getLoginId());
-		admin.setStatus(request.getStatus());
+		// loginId/status는 NOT NULL 컬럼이므로 값이 없을 때는 기존 값을 유지한다.
+		if (request.getLoginId() != null && !request.getLoginId().isBlank()) {
+			admin.setLoginId(request.getLoginId());
+		}
+
+		if (request.getStatus() != null && !request.getStatus().isBlank()) {
+			admin.setStatus(request.getStatus());
+		}
 
 		if (allowCompanyChange && Admin.ROLE_COMPANY_ADMIN.equals(admin.getRole())
 				&& request.getCompanyId() != null) {
