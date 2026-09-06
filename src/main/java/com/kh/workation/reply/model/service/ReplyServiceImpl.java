@@ -11,6 +11,7 @@ import com.kh.workation.member.model.vo.Employee;
 import com.kh.workation.crew.model.dao.CrewDao;
 import com.kh.workation.crew.model.vo.Crew;
 import com.kh.workation.reply.model.dao.ReplyDao;
+import com.kh.workation.reply.model.dto.ReplyCreateRequest;
 import com.kh.workation.reply.model.vo.Reply;
 
 @Service
@@ -36,28 +37,31 @@ public class ReplyServiceImpl implements ReplyService{
 
 	@Transactional
 	@Override
-	public Reply insertReply(Reply r, int crewId, String loginId) {
+	public Reply insertReply(ReplyCreateRequest request, int crewId, String loginId) {
 		Employee employee = employeeDao.findByLoginIdAndStatus(loginId, Employee.STATUS_ACTIVE)
 				.orElseThrow(() -> new IllegalArgumentException("활성 직원이 아닙니다."));
 		Crew crew = crewDao.findById(crewId)
 				.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 크루입니다."));
 
-		r.setCrew(crew);
-		r.setEmployee(employee);
-		if (r.getParentReply() != null && r.getParentReply().getReplyId() != null) {
-			Reply parentReply = replyDao.findById(r.getParentReply().getReplyId())
+		Reply reply = new Reply();
+		reply.setReplyContent(request.getReplyContent());
+		reply.setReplyPrivate(request.getReplyPrivate());
+		reply.setCrew(crew);
+		reply.setEmployee(employee);
+		if (request.getParentReplyId() != null) {
+			Reply parentReply = replyDao.findById(request.getParentReplyId())
 					.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 부모 댓글입니다."));
 			if (!parentReply.getCrew().getCrewId().equals(crewId)) {
 				throw new IllegalArgumentException("다른 크루의 댓글에는 답글을 작성할 수 없습니다.");
 			}
-			r.setParentReply(parentReply);
+			reply.setParentReply(parentReply);
 		} else {
-			r.setParentReply(null);
+			reply.setParentReply(null);
 		}
-		r.setReplyPrivate("Y".equals(r.getReplyPrivate()) ? "Y" : "N");
-		r.setStatus("NORMAL");
-		r.setCreatedDate(java.time.LocalDateTime.now());
-		return replyDao.save(r);
+		reply.setReplyPrivate("Y".equals(reply.getReplyPrivate()) ? "Y" : "N");
+		reply.setStatus("NORMAL");
+		reply.setCreatedDate(java.time.LocalDateTime.now());
+		return replyDao.save(reply);
 	}
 	
 	@Transactional

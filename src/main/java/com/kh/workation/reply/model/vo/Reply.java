@@ -69,7 +69,7 @@ public class Reply { // 댓글 수정은 없는지 ?
 	@Column(name="REPLY_CONTENT", nullable=false, length=700)
 	private String replyContent;
 	
-	@Column(name="REPLY_PRIVATE",columnDefinition="VARCHAR(20) DEFAULT N'")
+	@Column(name="REPLY_PRIVATE", columnDefinition="VARCHAR(20) DEFAULT 'N'")
 	private String replyPrivate;
 	
 	@Column(name="CREATED_DATE", columnDefinition="TIMESTAMP DEFAULT CURRENT_TIMESTAMP" )

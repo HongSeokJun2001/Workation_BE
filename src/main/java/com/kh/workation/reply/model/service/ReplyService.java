@@ -2,6 +2,7 @@ package com.kh.workation.reply.model.service;
 
 import java.util.List;
 
+import com.kh.workation.reply.model.dto.ReplyCreateRequest;
 import com.kh.workation.reply.model.vo.Reply;
 
 public interface ReplyService{
@@ -12,7 +13,7 @@ public interface ReplyService{
 	
 	
 	// 댓글 작성
-	Reply insertReply(Reply r, int crewId, String loginId);
+	Reply insertReply(ReplyCreateRequest request, int crewId, String loginId);
 	
 	
 	//댓글 삭제

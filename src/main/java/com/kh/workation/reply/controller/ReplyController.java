@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.kh.workation.auth.model.service.AuthService;
 import com.kh.workation.reply.model.service.ReplyService;
+import com.kh.workation.reply.model.dto.ReplyCreateRequest;
 import com.kh.workation.reply.model.vo.Reply;
 
 @CrossOrigin
@@ -73,7 +74,7 @@ public class ReplyController {
 	// 댓글 작성
 	@PostMapping("/crews/{crewId}/replies")
 	public ResponseEntity<String> insertReply(@PathVariable("crewId") int crewId, 
-			@RequestBody Reply r,
+			@RequestBody ReplyCreateRequest request,
 			@RequestHeader(value = "Authorization", required = false) String authHeader){
 			String token = getToken(authHeader);
 			if (token == null) {
@@ -82,7 +83,7 @@ public class ReplyController {
 		
 		String loginId = authService.getLoginId(token);
 		
-			Reply insertR = replyService.insertReply(r, crewId, loginId);
+			Reply insertR = replyService.insertReply(request, crewId, loginId);
 		
 		String message = (insertR != null)? "success" : "fail";
 		
