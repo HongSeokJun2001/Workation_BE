@@ -118,7 +118,7 @@ public class CrewController {
         }
 		
 		// 한페이지당 몇개씩 보여질건지, 페이징바 숫자 갯수
-		int boardLimit = 5;
+		int boardLimit = 6;
 		int pageLimit = 5;
 		
 		
