@@ -9,6 +9,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.access.AccessDeniedException;
 
 import com.kh.workation.application.model.dao.ApplicationDao;
 import com.kh.workation.application.model.dao.ApprovalDao;
@@ -85,22 +86,57 @@ public class ApplicationServiceImpl implements ApplicationService{
 	
 	@Override
 	@Transactional(readOnly = true)
-	public ApplicationDetail getApplicationDetail(int workationId) {
-		
-		Application application = applicationDao.findByWorkationId(workationId)
+	public ApplicationDetail getApplicationDetail(int workationId, Long loginCompanyId) {
+	    Application application = applicationDao.findByWorkationId(workationId)
 	            .orElseThrow(() -> new IllegalArgumentException("해당 신청 내역을 찾을 수 없습니다. id=" + workationId));
-		
-		return new ApplicationDetail(application);
+
+	    // companyId가 존재하는 기업 관리자인 경우, 해당 기업의 신청 내역인지 검증 (null이면 전체 관리자이므로 통과)
+	    if (loginCompanyId != null) {
+	        Long appCompanyId = null;
+
+	        if (application.getCrew() != null) {
+	            // 1. Crew에 Company가 정상 매핑되어 있는 경우
+	            if (application.getCrew().getCompany() != null) {
+	                appCompanyId = application.getCrew().getCompany().getCompanyId();
+	            } 
+	            // 2. [임시 대응] Crew의 Company가 null인 경우 크루장(Employee)의 companyId 참조
+	            else if (application.getCrew().getEmployee() != null) {
+	                appCompanyId = application.getCrew().getEmployee().getCompanyId();
+	            }
+	        }
+
+	        // 검증: 기업 ID를 찾을 수 없거나 로그인한 기업 관리자의 ID와 불일치할 경우 예외 처리
+	        if (appCompanyId == null || !loginCompanyId.equals(appCompanyId)) {
+	            throw new AccessDeniedException("소속 기업의 워케이션 신청 내역만 조회할 수 있습니다.");
+	        }
+	    }
+
+	    return new ApplicationDetail(application);
 	}
-	
+
 	@Override
 	@Transactional(readOnly = true)
-	public ApplicationDetail getApplicationMemberDetail(int workationId) {
-		
-		Application application = applicationDao.findByWorkationId(workationId)
+	public ApplicationDetail getApplicationMemberDetail(int workationId, String loginId) {
+	    Application application = applicationDao.findByWorkationId(workationId)
 	            .orElseThrow(() -> new IllegalArgumentException("해당 신청 내역을 찾을 수 없습니다. id=" + workationId));
-		
-		return new ApplicationDetail(application);
+
+	    // 해당 신청의 크루원(리더 포함) 목록 중 로그인한 사원(loginId)이 존재하는지 검증
+	    boolean isCrewMember = application.getCrew().getCrewMemberHists().stream()
+	            .anyMatch(hist -> hist.getEmployee().getLoginId().equals(loginId)
+	                           && "ACTIVE".equalsIgnoreCase(hist.getStatus())); // 탈퇴한 멤버 제외 필요 시 조건 유지
+
+	    if (!isCrewMember) {
+	        throw new AccessDeniedException("본인이 속한 크루의 워케이션 예약 내역만 조회할 수 있습니다.");
+	    }
+	    
+	    // 로그인한 유저 ID와 신청건의 leaderId 비교
+	    boolean isLeader = application.getCrew().getEmployee().getLoginId().equals(loginId);
+
+	    // 3. DTO 생성 후 isLeader 설정
+	    ApplicationDetail detail = new ApplicationDetail(application);
+	    detail.setIsleader(isLeader); 
+
+	    return detail;
 	}
 	
 	@Override

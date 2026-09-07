@@ -159,7 +159,7 @@ public class CrewServiceImpl implements CrewService{
 	@Transactional(readOnly = true)
 	public List<Crew> getLeaderCrews(String loginId) {
 		
-		return crewDao.findByEmployeeLoginId(loginId);
+		return crewDao.findFullCrewsByLeaderLoginId(loginId);
 	}
 
 }
