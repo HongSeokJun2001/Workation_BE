@@ -3,6 +3,7 @@ package com.kh.workation.crew.controller;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.time.LocalDate;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -24,6 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.kh.workation.auth.model.service.AuthService;
 import com.kh.workation.common.model.vo.PageInfo;
 import com.kh.workation.common.template.Pagination;
+import com.kh.workation.common.template.XssDefencePolicy;
 import com.kh.workation.crew.model.dto.CrewResponse;
 import com.kh.workation.crew.model.service.CrewService;
 import com.kh.workation.crew.model.vo.Crew;
@@ -37,10 +39,12 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 
 @CrossOrigin
 @RestController
+@Tag(name = "Crew API", description = "크루 모집 및 가입 관련 API")
 public class CrewController {
 	
 	
@@ -227,9 +231,18 @@ public class CrewController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("fail");
         }
 
-        if (c == null) {
+		if (c == null || c.getCrewName() == null || c.getCrewName().isBlank()) {
             return ResponseEntity.badRequest().body("fail");
         }
+
+		if (c.getCreatedDate() != null && c.getCreatedDate().isBefore(LocalDate.now())) {
+			return ResponseEntity.badRequest().body("작성일은 오늘보다 이전일 수 없습니다.");
+		}
+
+		c.setCrewName(XssDefencePolicy.defence(c.getCrewName()));
+		if (c.getCrewContent() != null) {
+			c.setCrewContent(XssDefencePolicy.defence(c.getCrewContent()));
+		}
 
         String loginId = authService.getLoginId(token);
 
@@ -242,6 +255,8 @@ public class CrewController {
 	
 	// 크루 수정
 	// 해당 Crew의 작성자만 가능
+	@Operation(summary = "크루 모집 글 수정", description = "크루 작성자 또는 최고관리자가 모집 글을 수정합니다.")
+	@SecurityRequirement(name = "JWT")
 	@PutMapping("/crews/{crewId}")
 	public ResponseEntity<String> updateCrew(@PathVariable("crewId")int crewId, @RequestBody Crew c,
 										HttpServletRequest request,
@@ -267,9 +282,14 @@ public class CrewController {
 	    }
 
 	    // 수정 데이터가 없는 경우
-	    if (c == null) {
+		if (c == null || c.getCrewName() == null || c.getCrewName().isBlank()) {
 	        return ResponseEntity.badRequest().body("fail");
 	    }
+
+		c.setCrewName(XssDefencePolicy.defence(c.getCrewName()));
+		if (c.getCrewContent() != null) {
+			c.setCrewContent(XssDefencePolicy.defence(c.getCrewContent()));
+		}
 
 	    // URL의 crewId를 사용
 	    c.setCrewId(crewId);
@@ -287,6 +307,8 @@ public class CrewController {
         }
 	// 해당 Crew의 작성자만 가능
 	
+	@Operation(summary = "크루 모집 글 삭제", description = "크루 작성자 또는 최고관리자가 모집 글을 삭제합니다.")
+	@SecurityRequirement(name = "JWT")
 	@DeleteMapping("/crews/{crewId}")
 	public ResponseEntity<String> deleteCrew(@PathVariable("crewId")int crewId,
 										@RequestHeader(value = "Authorization", required = false) String authHeader){
@@ -320,6 +342,8 @@ public class CrewController {
             		
             		
             		
+	@Operation(summary = "크루 가입 신청", description = "직원이 크루 가입을 신청합니다.")
+	@SecurityRequirement(name = "JWT")
 	@PostMapping("/crews/{crewId}/join")
 	public ResponseEntity<String> joinCrew(@PathVariable int crewId,
 											HttpServletRequest request,
@@ -337,6 +361,10 @@ public class CrewController {
 	    }
 
 	    String loginId = authService.getLoginId(token);
+	    String failureReason = crewService.getJoinFailureReason(crewId, loginId);
+	    if (failureReason != null) {
+	        return ResponseEntity.status(HttpStatus.CONFLICT).body(failureReason);
+	    }
 
 	    // TODO: loginId를 이용해 실제 Employee를 조회해야 함
 	    // crewService.joinCrew(crewId, loginId);
@@ -350,7 +378,7 @@ public class CrewController {
 	// 내가 신청한 크루 목록 조회
 	// EMPLOYEE
 	@GetMapping("/crews/mylist")
-	public ResponseEntity<List<CrewMemberHist>> selectMyCrewList(
+	public ResponseEntity<List<Crew>> selectMyCrewList(
 		@RequestHeader(value = "Authorization", required = false) String authHeader) {
 		
 		String token = getToken(authHeader);
@@ -367,9 +395,34 @@ public class CrewController {
         
         String loginId = authService.getLoginId(token);
 
-        return ResponseEntity.ok(
-                crewService.selectMyCrewList(loginId)
-        );
+		List<Crew> crews = crewService.selectMyCrewList(loginId).stream()
+				.map(CrewMemberHist::getCrew)
+				.filter(crew -> crew != null)
+				.toList();
+
+		return ResponseEntity.ok(crews);
+	}
+
+	@GetMapping("/crews/mycreated")
+	public ResponseEntity<List<Crew>> selectMyCreatedCrewList(
+			@RequestHeader(value = "Authorization", required = false) String authHeader) {
+		String token = getToken(authHeader);
+		if (token == null || !authService.isEmployeeToken(token)) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+		}
+
+		return ResponseEntity.ok(crewService.getLeaderCrews(authService.getLoginId(token)));
+	}
+
+	@GetMapping("/crews/position/{crewId}")
+	public ResponseEntity<Integer> selectCrewPage(@PathVariable int crewId,
+			@RequestHeader(value = "Authorization", required = false) String authHeader) {
+		if (getToken(authHeader) == null) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+		}
+
+		long crewsBefore = crewService.countActiveCrewsAfter(crewId);
+		return ResponseEntity.ok((int) (crewsBefore / 6) + 1);
 	}
 
 	// 크루 멤버 이름 조회
@@ -387,6 +440,8 @@ public class CrewController {
 	}
 
 	// 크루 탈퇴
+	@Operation(summary = "크루 탈퇴", description = "가입한 크루에서 탈퇴합니다. 크루장은 탈퇴할 수 없습니다.")
+	@SecurityRequirement(name = "JWT")
 	@DeleteMapping("/crews/{crewId}/join")
 	public ResponseEntity<String> leaveCrew(@PathVariable int crewId,
 			@RequestHeader(value = "Authorization", required = false) String authHeader) {
@@ -404,6 +459,15 @@ public class CrewController {
 		    }
 
 		    String loginId = authService.getLoginId(token);
+		    Crew existingCrew = crewService.selectCrew(crewId);
+
+			if (existingCrew == null) {
+				return ResponseEntity.notFound().build();
+			}
+
+			if (isCrewLeader(token, existingCrew)) {
+				return ResponseEntity.status(HttpStatus.FORBIDDEN).body("작성자는 크루에서 탈퇴할 수 없습니다.");
+			}
 
 		    int result = crewService.leaveCrew(crewId, loginId);
 

@@ -15,12 +15,19 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.kh.workation.auth.model.service.AuthService;
+import com.kh.workation.common.template.XssDefencePolicy;
 import com.kh.workation.reply.model.service.ReplyService;
 import com.kh.workation.reply.model.dto.ReplyCreateRequest;
 import com.kh.workation.reply.model.vo.Reply;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 @CrossOrigin
 @RestController
+@Tag(name = "Reply API", description = "크루 댓글 관련 API")
 public class ReplyController {
 	
 	/*
@@ -53,6 +60,8 @@ public class ReplyController {
 
 	
 	 //댓글 조회
+	@Operation(summary = "댓글 목록 조회", description = "크루의 댓글 목록을 조회합니다.")
+	@ApiResponse(responseCode = "200", description = "조회 성공")
 	@GetMapping("/crews/{crewId}/replies")
 	public ResponseEntity<ArrayList<Reply>> selectReplyList(@PathVariable("crewId")int crewId, 
 			@RequestHeader(value = "Authorization", required = false) String authHeader){
@@ -65,6 +74,21 @@ public class ReplyController {
         }
         
 		ArrayList<Reply> list = (ArrayList) replyService.selectReplyList(crewId);
+		String loginId = authService.getLoginId(token);
+		for (Reply reply : list) {
+			if (!"Y".equals(reply.getReplyPrivate())) {
+				continue;
+			}
+
+			String replyAuthor = reply.getEmployee() == null ? null : reply.getEmployee().getLoginId();
+			String crewOwner = reply.getCrew() == null || reply.getCrew().getEmployee() == null
+					? null : reply.getCrew().getEmployee().getLoginId();
+			boolean canRead = loginId != null
+					&& (loginId.equals(replyAuthor) || loginId.equals(crewOwner));
+			if (!canRead) {
+				reply.setReplyContent("비밀 댓글 입니다.");
+			}
+		}
 			
 		return ResponseEntity.status(HttpStatus.OK).body(list);
 		
@@ -72,6 +96,9 @@ public class ReplyController {
 		}
 	
 	// 댓글 작성
+	@Operation(summary = "댓글 작성", description = "크루에 댓글 또는 대댓글을 작성합니다.")
+	@ApiResponse(responseCode = "200", description = "작성 성공")
+	@SecurityRequirement(name = "JWT")
 	@PostMapping("/crews/{crewId}/replies")
 	public ResponseEntity<String> insertReply(@PathVariable("crewId") int crewId, 
 			@RequestBody ReplyCreateRequest request,
@@ -80,6 +107,10 @@ public class ReplyController {
 			if (token == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
         }
+			if (request == null || request.getReplyContent() == null || request.getReplyContent().isBlank()) {
+				return ResponseEntity.badRequest().body("fail");
+			}
+			request.setReplyContent(XssDefencePolicy.defence(request.getReplyContent()));
 		
 		String loginId = authService.getLoginId(token);
 		
@@ -91,6 +122,9 @@ public class ReplyController {
 	}
 	
 	// 댓글 삭제
+	@Operation(summary = "댓글 삭제", description = "작성자 본인의 댓글을 삭제합니다.")
+	@ApiResponse(responseCode = "200", description = "삭제 성공")
+	@SecurityRequirement(name = "JWT")
 	@DeleteMapping("/crews/replies/{replyId}")
 	public ResponseEntity<String> deleteReply(@PathVariable("replyId")int replyId,
 			@RequestHeader(value = "Authorization", required = false)String authHeader){

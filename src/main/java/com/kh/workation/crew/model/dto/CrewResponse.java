@@ -1,9 +1,9 @@
 package com.kh.workation.crew.model.dto;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-
 import com.kh.workation.crew.model.vo.Crew;
+import com.kh.workation.member.model.vo.Company;
+import com.kh.workation.member.model.vo.Employee;
 
 import lombok.Getter;
 
@@ -14,7 +14,7 @@ public class CrewResponse {
     private String crewName;
     private String crewContent;
     private String status;
-    private LocalDate createDate;
+    private LocalDate createdDate;
     private LocalDate endDate;
     private Integer capacity;
     private Integer workUsedDays;
@@ -27,10 +27,12 @@ public class CrewResponse {
         this.crewName = crew.getCrewName();
         this.crewContent = crew.getCrewContent();
         this.status = crew.getStatus();
-        this.createDate = crew.getCreatedDate();
+        this.createdDate = crew.getCreatedDate();
         this.endDate = crew.getEndDate();
         this.capacity = crew.getCapacity();
         this.workUsedDays = crew.getWorkUsedDays();
+
+
 
         if (crew.getCompany() != null) {
             this.companyId = crew.getCompany().getCompanyId();

@@ -34,6 +34,8 @@ public interface CrewService {
 	// 크루 신청
 	CrewMemberHist joinCrew(int crewId, String loginId);
 
+	String getJoinFailureReason(int crewId, String loginId);
+
 	// 내가 신청한 크루 조회
 	List<CrewMemberHist> selectMyCrewList(String loginId);
 
@@ -47,6 +49,8 @@ public interface CrewService {
 	
 	// * 워케이션 신청용
 	List<Crew> getLeaderCrews(String loginId);
+
+	long countActiveCrewsAfter(int crewId);
 	
 
 }
