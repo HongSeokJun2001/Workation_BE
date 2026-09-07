@@ -25,6 +25,7 @@ import com.kh.workation.crew.model.dao.CrewDao;
 import com.kh.workation.crew.model.dao.CrewMemberHistDao;
 import com.kh.workation.crew.model.vo.Crew;
 import com.kh.workation.crew.model.vo.CrewMemberHist;
+import com.kh.workation.facility.model.vo.Facility;
 import com.kh.workation.member.model.dao.EmployeeDao;
 import com.kh.workation.member.model.vo.Employee;
 import com.kh.workation.reservation.model.dao.ReservationDao;
@@ -198,7 +199,17 @@ public class ApplicationServiceImpl implements ApplicationService{
 		
 		Progress progress = progressDao.findById(workationId)
 				.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 신청 건입니다."));
-		progress.setStatus("CONFIRM");                        
+		progress.setStatus("CONFIRM"); 
+		
+		// 연관된 Facility 잔여 객실 수 -1 차감
+		Facility facility = app.getFacility();
+		if(facility != null) {
+			// Facility VO의 decreaseRoomCount() 호출
+			// 잔여 객실이 0개 이하면 IllegalStateException("남은 객실이 없습니다.") 예외 발생
+			facility.decreaseRoomCount();
+		} else {
+			throw new IllegalArgumentException("신청 정보에 연관된 시설 정보가 없습니다.");
+		}
         
         Reservation reservation = new Reservation();
         reservation.setApplication(app);
@@ -230,6 +241,15 @@ public class ApplicationServiceImpl implements ApplicationService{
 	    if ("CANCELLED".equals(progress.getStatus())) {
 	        throw new IllegalStateException("이미 취소 처리된 신청 건입니다.");
 	    }
+	    
+	    // 승인 상태에서 취소하는 경우, 차감했던 시설 객실 수 복구
+	    if("CONFIRM".equals(progress.getStatus())) {
+	    	Facility facility = app.getFacility();
+	    	if(facility != null) {
+	    		facility.increaseRoomCount(); // Facility 엔터티에 객실 수 + 1 로직 호출
+	    	}
+	    }
+	    
 	    progress.setStatus("CANCELLED");
 	    
 	    Approval approval = new Approval();
@@ -285,6 +305,14 @@ public class ApplicationServiceImpl implements ApplicationService{
             // Progress 상태 변경
             progress.setStatus("COMPLETED");
 
+            // 연관된 Application 및 Facility 객실 수 복구
+            applicationDao.findById(progress.getWorkationId()).ifPresent(app -> {
+            	Facility facility = app.getFacility();
+            	if(facility != null) {
+            		facility.increaseRoomCount(); // 사용 종류 시 객실 수 + 1
+            	}
+            });
+            
             // 연관된 Reservation 상태 변경
             reservationDao.findByApplication_WorkationId(progress.getWorkationId())
                 .ifPresent(reservation -> {

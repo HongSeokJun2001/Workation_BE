@@ -77,4 +77,17 @@ public class Facility {
 		image.setFacility(this); // 자식(FacilityImage) 객체에도 부모 (Facility) 객체 설정
 	}
 	
+	// 객실 수 차감 메서드
+	public void decreaseRoomCount() {
+		if(this.roomCount <= 0) {
+			throw new IllegalStateException("남은 객실이 없습니다.");
+		}
+		this.roomCount -= 1;
+	}
+	
+	// 예약 취소/반려 시 객실 수 복구 메서드
+	public void increaseRoomCount() {
+		this.roomCount += 1;
+	}
+	
 }
