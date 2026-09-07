@@ -67,6 +67,7 @@ public class ReservationController {
         return ResponseEntity.ok(detail);
     }
 	
+	
 	@PutMapping("/reservation/cancel/{workationId}")
 	public ResponseEntity<String> cancelReservation(@PathVariable("workationId") int workationId, @RequestBody Map<String, String> body, HttpServletRequest request) {
 		

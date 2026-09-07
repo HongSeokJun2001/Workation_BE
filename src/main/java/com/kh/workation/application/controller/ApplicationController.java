@@ -12,6 +12,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -173,6 +174,13 @@ public class ApplicationController {
 	    
 	    return ResponseEntity.status(HttpStatus.OK)
 				 .body(message);
+	}
+	
+	@ExceptionHandler({IllegalStateException.class, IllegalArgumentException.class})
+	public ResponseEntity<String> handleServiceException(RuntimeException e) {
+		// HTTP Status: 400 Bad Request
+		// Body: 예외 메세지 전달 ("남은 객실이 없습니다.", "존재하지 않는 신청 건입니다.")
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
 	}
 	
 }

@@ -17,6 +17,7 @@ import com.kh.workation.crew.model.dao.CrewDao;
 import com.kh.workation.crew.model.dao.CrewMemberHistDao;
 import com.kh.workation.crew.model.vo.Crew;
 import com.kh.workation.crew.model.vo.CrewMemberHist;
+import com.kh.workation.facility.model.vo.Facility;
 import com.kh.workation.member.model.dao.EmployeeDao;
 import com.kh.workation.member.model.vo.Employee;
 import com.kh.workation.reservation.model.dao.ReservationDao;
@@ -64,6 +65,8 @@ public class ReservationServiceImpl implements ReservationService{
 		return new ReservationDetail(reservation);
 	}
 	
+	
+	
 	@Override
 	@Transactional
 	public Reservation cancelReservation(int workationId, String reason) {
@@ -89,6 +92,12 @@ public class ReservationServiceImpl implements ReservationService{
 	    reservation.setStatus("CANCELLED");
 	    reservation.setCancelledReason(reason);       // 취소 사유 저장
 	    reservation.setCancelledDate(LocalDate.now()); // 취소 일자 저장 (현재 날짜)
+	    
+	    // 차감되었던 객실 수 다시 복구
+	    Facility facility = app.getFacility();
+	    if(facility != null) {
+	    	facility.increaseRoomCount();
+	    }
 	    
 	    if (app.getCrew() != null) {
 	        // 크루 정보 조회
