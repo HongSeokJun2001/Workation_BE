@@ -13,11 +13,13 @@ import com.kh.workation.crew.model.vo.Crew;
 
 public interface CrewDao extends JpaRepository<Crew, Integer>{
 
-	Page<Crew> findByStatusOrderByCreatedDateDescCrewIdDesc(String status, Pageable pageable);
+	long countByStatusAndCrewIdGreaterThan(String status, Integer crewId);
+
+	Page<Crew> findByStatusOrderByCrewIdDesc(String status, Pageable pageable);
 	Page<Crew> findByStatusOrderByEndDateAscCrewIdDesc(String status, Pageable pageable);
 
 
-	Page<Crew> findByCrewNameContainingAndStatusOrderByCreatedDateDescCrewIdDesc(String keyword, String status, Pageable pageable);
+	Page<Crew> findByCrewNameContainingAndStatusOrderByCrewIdDesc(String keyword, String status, Pageable pageable);
 	Page<Crew> findByCrewNameContainingAndStatusOrderByEndDateAscCrewIdDesc(String keyword, String status, Pageable pageable);
 
 

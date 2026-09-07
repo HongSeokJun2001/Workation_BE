@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.kh.workation.auth.model.service.AuthService;
 import com.kh.workation.common.model.vo.PageInfo;
 import com.kh.workation.common.template.Pagination;
+import com.kh.workation.common.template.XssDefencePolicy;
 import com.kh.workation.member.model.vo.Admin;
 import com.kh.workation.notice.model.service.NoticeService;
 import com.kh.workation.notice.model.vo.Notice;
@@ -33,9 +34,11 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 @CrossOrigin
 @RestController
+@Tag(name = "Notice API", description = "공지사항 관련 API")
 // @RequestMapping("/notices") 
 public class NoticeController {
 	
@@ -163,6 +166,9 @@ public class NoticeController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("fail");
         }
 
+		n.setNoticeTitle(XssDefencePolicy.defence(n.getNoticeTitle()));
+		n.setNoticeContent(XssDefencePolicy.defence(n.getNoticeContent()));
+
         // 기본값 설정
         if (n.getStatus() == null || n.getStatus().isBlank()) {
             n.setStatus("Y");
@@ -192,6 +198,7 @@ public class NoticeController {
 	
 	//공지사항 상세 조회용 컨트롤러
 	// 모든 로그인 사용자가 조회 가능 
+	@Operation(summary = "공지사항 상세 조회", description = "공지사항 상세 내용을 조회하고 조회수를 증가시킵니다.")
 	@GetMapping("/notices/{noticeId}")
 	public ResponseEntity<Notice> selectNotice(@PathVariable("noticeId") int noticeId,
 			@RequestHeader(value = "Authorization", required = false) String authHeader){
@@ -221,6 +228,8 @@ public class NoticeController {
 	
 	// 공지사항 수정용 컨트롤러
 	// SUPER_ADMIN 만 가능
+	@Operation(summary = "공지사항 수정", description = "최고관리자가 공지사항을 수정합니다.")
+	@SecurityRequirement(name = "JWT")
 	@PutMapping("/notices/{noticeId}")
 	public ResponseEntity<String> updateNotice(@PathVariable("noticeId") int noticeId,
 											@RequestBody Notice n,
@@ -242,6 +251,9 @@ public class NoticeController {
 
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("fail");
         }
+
+		n.setNoticeTitle(XssDefencePolicy.defence(n.getNoticeTitle()));
+		n.setNoticeContent(XssDefencePolicy.defence(n.getNoticeContent()));
 
         n.setNoticeId(noticeId);
 
@@ -268,6 +280,8 @@ public class NoticeController {
 	
 	//공지사항 삭제용 컨트롤러
 	// SUPER_ADMIN만 가능
+	@Operation(summary = "공지사항 삭제", description = "최고관리자가 공지사항을 삭제합니다.")
+	@SecurityRequirement(name = "JWT")
 	@DeleteMapping("/notices/{noticeId}")
 	public ResponseEntity<String> deleteNotice(@PathVariable("noticeId") int noticeId,
 										@RequestHeader(value = "Authorization", required = false) String authHeader){
