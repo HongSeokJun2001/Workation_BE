@@ -108,14 +108,22 @@ public class ApplicationController {
 	}
 	
 	@GetMapping("/application/{workationId}")
-	public ResponseEntity<ApplicationDetail> getApplicationDetail(@PathVariable("workationId") int workationId) {
-		ApplicationDetail detail = applicationService.getApplicationDetail(workationId);
+	public ResponseEntity<ApplicationDetail> getApplicationDetail(@PathVariable("workationId") int workationId
+			, HttpServletRequest request) {
+		String authHeader = request.getHeader("Authorization");
+	    String token = authHeader.substring(7);
+	    Long companyId = authService.getCompanyId(token);
+		ApplicationDetail detail = applicationService.getApplicationDetail(workationId, companyId);
         return ResponseEntity.ok(detail);
     }
 	
 	@GetMapping("/application/member/{workationId}")
-	public ResponseEntity<ApplicationDetail> getApplicationMemberDetail(@PathVariable("workationId") int workationId) {
-		ApplicationDetail detail = applicationService.getApplicationMemberDetail(workationId);
+	public ResponseEntity<ApplicationDetail> getApplicationMemberDetail(@PathVariable("workationId") int workationId
+			, HttpServletRequest request) {
+		String authHeader = request.getHeader("Authorization");
+		String token = authHeader.substring(7);
+	    String loginId = authService.getLoginId(token);
+		ApplicationDetail detail = applicationService.getApplicationMemberDetail(workationId, loginId);
         return ResponseEntity.ok(detail);
     }
 	

@@ -224,6 +224,7 @@ public class FacilityServiceImpl implements FacilityService{
 	    List<Facility> facilityList = facilityDao.findAll();
 	    
 	    return facilityList.stream()
+	            .filter(facility -> facility.getRoomCount() > 0)
 	            .map(FacilityResponseDto::fromEntity)
 	            .collect(Collectors.toList());
 	}

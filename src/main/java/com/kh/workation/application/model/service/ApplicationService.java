@@ -14,9 +14,9 @@ public interface ApplicationService {
 	
 	Page<ApplicationList> getApplicationMemberList(Pageable pageable, String loginId, ApplicationSearch searchDto);
 	
-	ApplicationDetail getApplicationDetail(int workationId);
+	ApplicationDetail getApplicationDetail(int workationId, Long companyId);
 	
-	ApplicationDetail getApplicationMemberDetail(int workationId);
+	ApplicationDetail getApplicationMemberDetail(int workationId, String loginId);
 	
 	Application insertApplication(Application a);
 	
