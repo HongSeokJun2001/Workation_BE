@@ -12,6 +12,10 @@ import com.kh.workation.notice.model.vo.Notice;
 public interface NoticeDao extends JpaRepository<Notice,Integer>{
 
 	Page<Notice> findByStatusOrderByNoticeIdDesc(String status, Pageable pageable);
+
+	Notice findFirstByStatusAndNoticeIdLessThanOrderByNoticeIdDesc(String status, int noticeId);
+
+	Notice findFirstByStatusAndNoticeIdGreaterThanOrderByNoticeIdAsc(String status, int noticeId);
 	
 	@Modifying
 	@Query("""

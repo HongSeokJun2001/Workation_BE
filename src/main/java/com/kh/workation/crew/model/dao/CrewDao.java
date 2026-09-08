@@ -36,13 +36,7 @@ public interface CrewDao extends JpaRepository<Crew, Integer>{
 	
 	
 	
-	@Query("SELECT c FROM Crew c " +
-		       "LEFT JOIN c.crewMemberHists h " +
-		       "WHERE c.employee.loginId = :loginId " +
-		       "AND h.status = 'ACTIVE' " +
-		       "GROUP BY c.id " +
-		       "HAVING COUNT(h) = c.capacity")
-		List<Crew> findFullCrewsByLeaderLoginId(@Param("loginId") String loginId);
+	List<Crew> findByEmployeeLoginIdAndStatusOrderByCrewIdDesc(String loginId, String status);
 
 }
 
