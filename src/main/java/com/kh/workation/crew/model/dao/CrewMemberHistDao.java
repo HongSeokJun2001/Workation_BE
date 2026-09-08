@@ -13,6 +13,14 @@ import com.kh.workation.crew.model.vo.CrewMemberHist;
 
 public interface CrewMemberHistDao extends JpaRepository<CrewMemberHist, Integer>{
 
+    @Query("""
+        SELECT COUNT(h)
+        FROM CrewMemberHist h
+        WHERE h.employee.loginId = :loginId
+        AND h.status = 'ACTIVE'
+        """)
+    long countActiveCrewMemberships(@Param("loginId") String loginId);
+
 
     // 크루 신청 중복 확인
 	@Query("""

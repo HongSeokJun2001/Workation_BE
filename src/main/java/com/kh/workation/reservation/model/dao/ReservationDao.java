@@ -6,6 +6,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.kh.workation.reservation.model.vo.Reservation;
@@ -39,4 +41,20 @@ public interface ReservationDao extends JpaRepository<Reservation, Integer>{
 	        "reservationDate"
 	    })
 	    Optional<Reservation> findByApplication_WorkationId(int workationId);
+
+	@Query("""
+		SELECT COUNT(DISTINCT r.facility.facilityId)
+		FROM Reservation r
+		JOIN r.application.crew.crewMemberHists h
+		WHERE h.employee.loginId = :loginId
+		AND h.status = 'ACTIVE'
+		AND r.status = 'COMPLETED'
+		AND NOT EXISTS (
+			SELECT review.reviewId
+			FROM Review review
+			WHERE review.employee.loginId = :loginId
+			AND review.facility.facilityId = r.facility.facilityId
+		)
+		""")
+	long countReviewableFacilities(@Param("loginId") String loginId);
 }
