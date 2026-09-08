@@ -1,5 +1,6 @@
 package com.kh.workation.review.controller;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -205,15 +206,17 @@ public class ReviewController {
     // ----------------------------------------------------
     private Map<String, Object> toResponse(Review review) {
 
-        return Map.of(
-                "reviewId", review.getReviewId(),
-                "employeeId", review.getEmployee().getEmployeeId(),
-                "loginId", review.getEmployee().getLoginId(),
-                "employeeName", review.getEmployee().getEmployeeName(),
-                "rating", review.getRating(),
-                "content", review.getContent(),
-                "createdDate", review.getCreatedDate(),
-                "updatedDate", review.getUpdatedDate()
-        );
+        Map<String, Object> response = new HashMap<>();
+
+        response.put("reviewId", review.getReviewId());
+        response.put("employeeId", review.getEmployee().getEmployeeId());
+        response.put("loginId", review.getEmployee().getLoginId());
+        response.put("employeeName", review.getEmployee().getEmployeeName());
+        response.put("rating", review.getRating());
+        response.put("content", review.getContent());
+        response.put("createdDate", review.getCreatedDate());
+        response.put("updatedDate", review.getUpdatedDate());
+
+        return response;
     }
 }

@@ -48,6 +48,17 @@ public class ReviewServiceImpl implements ReviewService {
                 .orElseThrow(() ->
                         new IllegalArgumentException("해당 시설을 찾을 수 없습니다.")
                 );
+        
+        boolean alreadyReviewed =
+                reviewDao.existsByFacilityFacilityIdAndEmployeeEmployeeId(
+                        facilityId,
+                        employee.getEmployeeId()
+                );
+
+        if (alreadyReviewed) {
+            throw new IllegalArgumentException("이미 해당 시설에 리뷰를 작성했습니다.");
+        }
+        
 
         if (review.getRating() == null
                 || review.getRating() < 1
