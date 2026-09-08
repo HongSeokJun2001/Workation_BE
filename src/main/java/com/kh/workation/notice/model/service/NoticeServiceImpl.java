@@ -35,6 +35,18 @@ public class NoticeServiceImpl implements NoticeService{
 	}
 
 	@Override
+	@Transactional(readOnly = true)
+	public Notice selectPreviousNotice(int noticeId) {
+		return noticeDao.findFirstByStatusAndNoticeIdLessThanOrderByNoticeIdDesc("Y", noticeId);
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public Notice selectNextNotice(int noticeId) {
+		return noticeDao.findFirstByStatusAndNoticeIdGreaterThanOrderByNoticeIdAsc("Y", noticeId);
+	}
+
+	@Override
 	public Notice insertNotice(Notice n) {
 		return noticeDao.save(n);
 	}

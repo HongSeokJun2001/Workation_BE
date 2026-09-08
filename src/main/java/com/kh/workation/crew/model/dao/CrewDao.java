@@ -34,8 +34,8 @@ public interface CrewDao extends JpaRepository<Crew, Integer>{
 			""")
 	int deleteCrew(@Param("crewId")int crewId);
 	
-	
-	
+	List<Crew> findByEmployeeLoginIdAndStatusOrderByCrewIdDesc(String loginId, String status);
+         
 	@Query("SELECT c FROM Crew c " +
 		       "LEFT JOIN c.crewMemberHists h " +
 		       "WHERE c.employee.loginId = :loginId " +

@@ -35,6 +35,7 @@ public interface CrewMemberHistDao extends JpaRepository<CrewMemberHist, Integer
         JOIN FETCH h.crew
         WHERE h.employee.loginId = :loginId
         AND h.status = 'ACTIVE'
+        AND h.crew.status = 'Y'
         """)
 	List<CrewMemberHist> findMyCrewList(@Param("loginId")String loginId, String string);
 

@@ -11,6 +11,10 @@ public interface NoticeService {
 	Page<Notice> selectNoticeList(Pageable pageable);
 	
 	Notice selectNotice(int noticeId);
+
+	Notice selectPreviousNotice(int noticeId);
+
+	Notice selectNextNotice(int noticeId);
 	
 	int increaseCount(int noticeId);
 	

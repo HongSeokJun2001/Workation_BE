@@ -163,6 +163,11 @@ public class CrewServiceImpl implements CrewService{
 	        return "직원 또는 크루 정보를 찾을 수 없습니다.";
 	    }
 
+		Long crewCompanyId = crew.getCompany() == null ? null : crew.getCompany().getCompanyId();
+		if (crewCompanyId == null || !crewCompanyId.equals(employee.getCompanyId())) {
+			return "같은 회사 직원만 크루 신청이 가능합니다.";
+		}
+
 	    if (crew.getEndDate() != null && crew.getEndDate().isBefore(LocalDateTime.now().toLocalDate())) {
 	        return "모집 기간이 종료되었습니다.";
 	    }
@@ -240,7 +245,7 @@ public class CrewServiceImpl implements CrewService{
 	@Transactional(readOnly = true)
 	public List<Crew> getLeaderCrews(String loginId) {
 		
-		return crewDao.findFullCrewsByLeaderLoginId(loginId);
+		return crewDao.findByEmployeeLoginIdAndStatusOrderByCrewIdDesc(loginId, "Y");
 	}
 
 	@Override
