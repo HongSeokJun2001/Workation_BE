@@ -1,6 +1,7 @@
 package com.kh.workation.application.model.dao;
 
 import java.util.Optional;
+import java.time.LocalDate;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -45,5 +46,45 @@ public interface ApplicationDao extends JpaRepository<Application, Integer> {
 	        "reservation"
 	    })
 	    Optional<Application> findByWorkationId(int workationId);
+
+	@Query("""
+		SELECT COUNT(a)
+		FROM Application a
+		WHERE a.company.companyId = :companyId
+		AND a.progress.status = 'APPLY'
+		""")
+	long countPendingApplicationsByCompany(@Param("companyId") Long companyId);
+
+	@Query("""
+		SELECT COUNT(a)
+		FROM Application a
+		WHERE a.company.companyId = :companyId
+		AND a.progress.status = 'CONFIRM'
+		AND a.progress.confirmDate BETWEEN :startDate AND :endDate
+		""")
+	long countConfirmedApplicationsByCompanyAndConfirmDateBetween(
+			@Param("companyId") Long companyId,
+			@Param("startDate") LocalDate startDate,
+			@Param("endDate") LocalDate endDate);
+
+	@Query("""
+		SELECT COUNT(DISTINCT a)
+		FROM Application a
+		JOIN a.crew.crewMemberHists h
+		WHERE h.employee.loginId = :loginId
+		AND h.status = 'ACTIVE'
+		AND a.progress.status = 'APPLY'
+		""")
+	long countPendingApplicationsByCrewMember(@Param("loginId") String loginId);
+
+	@Query("""
+		SELECT COUNT(DISTINCT a)
+		FROM Application a
+		JOIN a.crew.crewMemberHists h
+		WHERE h.employee.loginId = :loginId
+		AND h.status = 'ACTIVE'
+		AND a.progress.status = 'CONFIRM'
+		""")
+	long countConfirmedApplicationsByCrewMember(@Param("loginId") String loginId);
 	
 }

@@ -224,6 +224,20 @@ public class NoticeController {
 		
 		
 	}
+
+	@GetMapping("/notices/{noticeId}/navigation")
+	public ResponseEntity<HashMap<String, Notice>> selectNoticeNavigation(@PathVariable("noticeId") int noticeId,
+			@RequestHeader(value = "Authorization", required = false) String authHeader) {
+		String token = getToken(authHeader);
+		if (!hasAnyAuthUser(token)) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+		}
+
+		HashMap<String, Notice> navigation = new HashMap<>();
+		navigation.put("previous", noticeService.selectPreviousNotice(noticeId));
+		navigation.put("next", noticeService.selectNextNotice(noticeId));
+		return ResponseEntity.ok(navigation);
+	}
 	
 	
 	// 공지사항 수정용 컨트롤러
