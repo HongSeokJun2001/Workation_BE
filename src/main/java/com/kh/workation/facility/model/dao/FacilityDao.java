@@ -4,6 +4,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -39,6 +40,11 @@ public interface FacilityDao extends JpaRepository<Facility, Long> {
     Page<Facility> searchActiveFacilitiesAsc(@Param("keyword") String keyword, @Param("region") String region, Pageable pageable);
 
 
+    // DB 원자적 연산으로 room_count 차감 (동시성 안전)
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE Facility f set f.roomCount = f.roomCount - 1 WHERE f.facilityId = :facilityId AND f.roomCount > 0 ")
+    int decreaseRoomCount(@Param("facilityId") Long facilityId);
+    
     // ================= [최고관리자 전용 (전체 상태)] =================
 
     // 5. 전체 목록 - 최신순

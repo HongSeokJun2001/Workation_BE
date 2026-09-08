@@ -13,11 +13,13 @@ import com.kh.workation.crew.model.vo.Crew;
 
 public interface CrewDao extends JpaRepository<Crew, Integer>{
 
-	Page<Crew> findByStatusOrderByCreatedDateDescCrewIdDesc(String status, Pageable pageable);
+	long countByStatusAndCrewIdGreaterThan(String status, Integer crewId);
+
+	Page<Crew> findByStatusOrderByCrewIdDesc(String status, Pageable pageable);
 	Page<Crew> findByStatusOrderByEndDateAscCrewIdDesc(String status, Pageable pageable);
 
 
-	Page<Crew> findByCrewNameContainingAndStatusOrderByCreatedDateDescCrewIdDesc(String keyword, String status, Pageable pageable);
+	Page<Crew> findByCrewNameContainingAndStatusOrderByCrewIdDesc(String keyword, String status, Pageable pageable);
 	Page<Crew> findByCrewNameContainingAndStatusOrderByEndDateAscCrewIdDesc(String keyword, String status, Pageable pageable);
 
 
@@ -35,13 +37,12 @@ public interface CrewDao extends JpaRepository<Crew, Integer>{
 	
 	
 	@Query("SELECT c FROM Crew c " +
-	           "WHERE c.employee.loginId = :loginId " +
-	           "AND c.crewId NOT IN (" +
-	           "    SELECT a.crew.crewId FROM Application a " +
-	           "    JOIN a.progress p " +
-	           "    WHERE p.status IN ('APPLY', 'CONFIRM')" +
-	           ")")
-	List<Crew> findByEmployeeLoginId(@Param("loginId") String loginId);
+		       "LEFT JOIN c.crewMemberHists h " +
+		       "WHERE c.employee.loginId = :loginId " +
+		       "AND h.status = 'ACTIVE' " +
+		       "GROUP BY c.id " +
+		       "HAVING COUNT(h) = c.capacity")
+		List<Crew> findFullCrewsByLeaderLoginId(@Param("loginId") String loginId);
 
 }
 

@@ -24,6 +24,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 
 @Entity
@@ -43,6 +44,7 @@ public class Reply { // 댓글 수정은 없는지 ?
 	@Id
 	@Column(name="REPLY_ID")
 	@GeneratedValue(strategy=GenerationType.IDENTITY)
+	@Schema(description = "댓글 고유 번호", example = "1")
 	private Integer replyId;
 	
 	
@@ -67,15 +69,19 @@ public class Reply { // 댓글 수정은 없는지 ?
     
 	
 	@Column(name="REPLY_CONTENT", nullable=false, length=700)
+	@Schema(description = "댓글 내용", example = "참여하고 싶습니다.")
 	private String replyContent;
 	
 	@Column(name="REPLY_PRIVATE", columnDefinition="VARCHAR(20) DEFAULT 'N'")
+	@Schema(description = "비밀 댓글 여부", example = "N", allowableValues = {"Y", "N"})
 	private String replyPrivate;
 	
 	@Column(name="CREATED_DATE", columnDefinition="TIMESTAMP DEFAULT CURRENT_TIMESTAMP" )
+	@Schema(description = "작성일시", example = "2026-09-08T10:00:00")
 	private LocalDateTime createdDate;
 	
 	@Column(name="STATUS", nullable=false, columnDefinition="VARCHAR(20) DEFAULT 'NORMAL'")
+	@Schema(description = "댓글 상태", example = "NORMAL", allowableValues = {"NORMAL", "DELETED"})
 	private String status;
 	
 

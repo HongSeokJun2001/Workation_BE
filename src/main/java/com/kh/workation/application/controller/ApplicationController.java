@@ -12,6 +12,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -108,14 +109,22 @@ public class ApplicationController {
 	}
 	
 	@GetMapping("/application/{workationId}")
-	public ResponseEntity<ApplicationDetail> getApplicationDetail(@PathVariable("workationId") int workationId) {
-		ApplicationDetail detail = applicationService.getApplicationDetail(workationId);
+	public ResponseEntity<ApplicationDetail> getApplicationDetail(@PathVariable("workationId") int workationId
+			, HttpServletRequest request) {
+		String authHeader = request.getHeader("Authorization");
+	    String token = authHeader.substring(7);
+	    Long companyId = authService.getCompanyId(token);
+		ApplicationDetail detail = applicationService.getApplicationDetail(workationId, companyId);
         return ResponseEntity.ok(detail);
     }
 	
 	@GetMapping("/application/member/{workationId}")
-	public ResponseEntity<ApplicationDetail> getApplicationMemberDetail(@PathVariable("workationId") int workationId) {
-		ApplicationDetail detail = applicationService.getApplicationMemberDetail(workationId);
+	public ResponseEntity<ApplicationDetail> getApplicationMemberDetail(@PathVariable("workationId") int workationId
+			, HttpServletRequest request) {
+		String authHeader = request.getHeader("Authorization");
+		String token = authHeader.substring(7);
+	    String loginId = authService.getLoginId(token);
+		ApplicationDetail detail = applicationService.getApplicationMemberDetail(workationId, loginId);
         return ResponseEntity.ok(detail);
     }
 	
@@ -173,6 +182,13 @@ public class ApplicationController {
 	    
 	    return ResponseEntity.status(HttpStatus.OK)
 				 .body(message);
+	}
+	
+	@ExceptionHandler({IllegalStateException.class, IllegalArgumentException.class})
+	public ResponseEntity<String> handleServiceException(RuntimeException e) {
+		// HTTP Status: 400 Bad Request
+		// Body: 예외 메세지 전달 ("남은 객실이 없습니다.", "존재하지 않는 신청 건입니다.")
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
 	}
 	
 }

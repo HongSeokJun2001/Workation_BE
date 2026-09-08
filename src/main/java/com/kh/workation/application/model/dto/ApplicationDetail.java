@@ -12,6 +12,7 @@ import lombok.Setter;
 public class ApplicationDetail {
 	
 	private int workationId;
+	private Long leaderId;
 
     private String crewName;
     private String leaderName;
@@ -31,6 +32,8 @@ public class ApplicationDetail {
     
     private String cancelledReason;
     
+    private boolean isleader;
+    
     // Entity(Application) -> DTO 변환 생성자
     public ApplicationDetail(Application a) {
         this.workationId = a.getWorkationId();
@@ -42,6 +45,7 @@ public class ApplicationDetail {
             this.crewName = a.getCrew().getCrewName();
             if (a.getCrew().getEmployee() != null) {
                 this.leaderName = a.getCrew().getEmployee().getEmployeeName();
+                this.leaderId = a.getCrew().getEmployee().getEmployeeId();
             }
         }
 

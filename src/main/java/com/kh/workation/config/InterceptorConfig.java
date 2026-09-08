@@ -27,6 +27,7 @@ public class InterceptorConfig implements WebMvcConfigurer {
 		registry.addInterceptor(loginInterceptor)
 		        .addPathPatterns(
 		        		"/application/insert",
+		        		"/application/member/**",
 		        		"/crews/leader",
 		        		"/crews/*/join",
 		        		"/crews/mylist/**",
