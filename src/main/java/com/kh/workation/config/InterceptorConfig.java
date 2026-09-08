@@ -32,6 +32,7 @@ public class InterceptorConfig implements WebMvcConfigurer {
 		        		"/crews/*/join",
 		        		"/crews/mylist/**",
 		        		"/reservation/**",
+				        "/employee/dashboard/**",
 		        		"/employee/my-info")
 		        .excludePathPatterns("/auth/**", "/public/**", "/admin/**");
 		

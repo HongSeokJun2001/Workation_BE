@@ -12,6 +12,10 @@ public interface EmployeeDao extends JpaRepository<Employee, Long> {
 
     boolean existsByLoginId(String loginId);
 
+    long countByCompanyId(Long companyId);
+
+    long countByCompanyIdAndIsProgressed(Long companyId, String isProgressed);
+
     java.util.Optional<Employee> findByLoginIdAndStatus(String loginId, String status);
 
         java.util.Optional<Employee> findByLoginIdAndStatusAndIsProgressed(
