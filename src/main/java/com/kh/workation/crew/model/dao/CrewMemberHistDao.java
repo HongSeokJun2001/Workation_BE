@@ -72,6 +72,9 @@ public interface CrewMemberHistDao extends JpaRepository<CrewMemberHist, Integer
             @Param("crewId") int crewId,
             @Param("leftDate") LocalDateTime leftDate);
     
+ 
+    
+    
     @Query("SELECT cmh FROM CrewMemberHist cmh " +
             "JOIN FETCH cmh.employee " +
             "WHERE cmh.crew.crewId = :crewId AND cmh.status = :status")

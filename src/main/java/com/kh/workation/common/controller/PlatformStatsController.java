@@ -109,6 +109,9 @@ public class PlatformStatsController {
 	@GetMapping("/employee/dashboard/stats")
 	public ResponseEntity<Map<String, Object>> selectEmployeeDashboardStats(HttpServletRequest request) {
 		String loginId = authService.getLoginId(getToken(request));
+		String employeeName = employeeDao.findByLoginIdAndStatus(loginId, "ACTIVE")
+				.map(employee -> employee.getEmployeeName())
+				.orElse(null);
 		List<Map<String, Object>> reviewableFacilities = reservationDao.findReviewableFacilities(loginId).stream()
 				.map(facility -> Map.<String, Object>of(
 						"facilityId", facility.getFacilityId(),
@@ -117,6 +120,7 @@ public class PlatformStatsController {
 				.toList();
 
 		return ResponseEntity.ok(Map.of(
+				"employeeName", employeeName == null ? "" : employeeName,
 				"joinedCrewCount", crewDao.countDistinctParticipatingCrews(loginId),
 				"pendingApplicationCount", applicationDao.countPendingApplicationsByCrewMember(loginId),
 				"approvedReservationCount", applicationDao.countConfirmedApplicationsByCrewMember(loginId),

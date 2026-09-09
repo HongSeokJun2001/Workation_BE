@@ -58,7 +58,7 @@ public class ReplyServiceImpl implements ReplyService{
 		} else {
 			reply.setParentReply(null);
 		}
-		reply.setReplyPrivate("Y".equals(reply.getReplyPrivate()) ? "Y" : "N");
+		reply.setReplyPrivate("Y".equals(request.getReplyPrivate()) ? "Y" : "N");
 		reply.setStatus("NORMAL");
 		reply.setCreatedDate(java.time.LocalDateTime.now());
 		return replyDao.save(reply);

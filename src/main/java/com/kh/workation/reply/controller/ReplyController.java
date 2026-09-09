@@ -80,13 +80,16 @@ public class ReplyController {
 				continue;
 			}
 
-			String replyAuthor = reply.getEmployee() == null ? null : reply.getEmployee().getLoginId();
-			String crewOwner = reply.getCrew() == null || reply.getCrew().getEmployee() == null
-					? null : reply.getCrew().getEmployee().getLoginId();
-			boolean canRead = loginId != null
-					&& (loginId.equals(replyAuthor) || loginId.equals(crewOwner));
-			if (!canRead) {
-				reply.setReplyContent("비밀 댓글 입니다.");
+		String replyAuthor = reply.getEmployee() == null ? null : reply.getEmployee().getLoginId();
+		String crewOwner = reply.getCrew() == null || reply.getCrew().getEmployee() == null
+				? null : reply.getCrew().getEmployee().getLoginId();
+		String parentAuthor = reply.getParentReply() == null || reply.getParentReply().getEmployee() == null
+				? null : reply.getParentReply().getEmployee().getLoginId();
+		boolean canRead = loginId != null
+				&& (loginId.equals(replyAuthor) || loginId.equals(crewOwner) || loginId.equals(parentAuthor));
+		
+		if (!canRead) {
+			reply.setReplyContent("비밀 댓글 입니다.");
 			}
 		}
 			
