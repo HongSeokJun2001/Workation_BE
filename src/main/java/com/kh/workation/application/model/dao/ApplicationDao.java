@@ -2,6 +2,7 @@ package com.kh.workation.application.model.dao;
 
 import java.util.Optional;
 import java.time.LocalDate;
+import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -86,5 +87,15 @@ public interface ApplicationDao extends JpaRepository<Application, Integer> {
 		AND a.progress.status = 'CONFIRM'
 		""")
 	long countConfirmedApplicationsByCrewMember(@Param("loginId") String loginId);
+
+	@EntityGraph(attributePaths = {
+			"crew",
+			"crew.employee",
+			"facility",
+			"reservationDate",
+			"progress"
+	})
+	List<Application> findByCompanyCompanyIdAndProgressStatusOrderByWorkationIdDesc(
+			Long companyId, String status, Pageable pageable);
 	
 }

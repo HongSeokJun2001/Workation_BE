@@ -13,6 +13,18 @@ import com.kh.workation.crew.model.vo.Crew;
 
 public interface CrewDao extends JpaRepository<Crew, Integer>{
 
+	@Query("""
+		SELECT COUNT(DISTINCT c.crewId)
+		FROM Crew c
+		LEFT JOIN c.crewMemberHists h
+		WHERE c.status = 'Y'
+		AND (
+			c.employee.loginId = :loginId
+			OR (h.employee.loginId = :loginId AND h.status = 'ACTIVE')
+		)
+		""")
+	long countDistinctParticipatingCrews(@Param("loginId") String loginId);
+
 	long countByStatusAndCrewIdGreaterThan(String status, Integer crewId);
 
 	Page<Crew> findByStatusOrderByCrewIdDesc(String status, Pageable pageable);
