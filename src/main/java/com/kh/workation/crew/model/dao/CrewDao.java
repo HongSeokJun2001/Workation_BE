@@ -13,7 +13,22 @@ import com.kh.workation.crew.model.vo.Crew;
 
 public interface CrewDao extends JpaRepository<Crew, Integer>{
 	
-	// 특정 크루보다 뒤에 등록된 활성 크루 수 조회, 크루 상세 위치 계산에 사
+
+
+	@Query("""
+		SELECT COUNT(DISTINCT c.crewId)
+		FROM Crew c
+		LEFT JOIN c.crewMemberHists h
+		WHERE c.status = 'Y'
+		AND (
+			c.employee.loginId = :loginId
+			OR (h.employee.loginId = :loginId AND h.status = 'ACTIVE')
+		)
+		""")
+	long countDistinctParticipatingCrews(@Param("loginId") String loginId);
+         
+         
+	// 특정 크루보다 뒤에 등록된 활성 크루 수 조회, 크루 상세 위치 계산에 사용
 	long countByStatusAndCrewIdGreaterThan(String status, Integer crewId);
 
 	//활성 크루를 크루 번호 내림차 순으로 페이징 조회
@@ -72,23 +87,26 @@ public interface CrewDao extends JpaRepository<Crew, Integer>{
 	
     
 	
-	// 특정 직원이 작성한 정원이 마감된 활성 모집글 조회
-	@Query("SELECT c FROM Crew c " +
-		       "LEFT JOIN c.crewMemberHists h " +
-		       "WHERE c.employee.loginId = :loginId " +
-		       "AND h.status = 'ACTIVE' " +
-		       "AND NOT EXISTS (" +
-		       "    SELECT a FROM Application a " +
-		       "    JOIN a.progress p " +
-		       "    WHERE a.crew = c " +
-		       "    AND p.status IN ('APPLY', 'CONFIRM')" +
-		       ") " +
-		       "GROUP BY c.id " +
-		       "HAVING COUNT(h) = c.capacity")
-	List<Crew> findFullCrewsByLeaderLoginId(@Param("loginId") String loginId);
+
+
 
 	// 특정 직원이 작성한 활성 모집글 조회
 	List<Crew> findByEmployeeLoginIdAndStatusOrderByCrewIdDesc(String loginId, String status);
+         
+         
+	// 특정 직원이 작성한 정원이 마감된 활성 모집글 조회         
+	@Query("""
+		    SELECT c
+		    FROM Crew c
+		    LEFT JOIN c.crewMemberHists h
+		        ON h.status = 'ACTIVE'
+		    WHERE c.employee.loginId = :loginId
+		    GROUP BY c
+		    HAVING COUNT(DISTINCT h) = c.capacity
+		    """)
+		List<Crew> findFullCrewsByLeaderLoginId(
+		    @Param("loginId") String loginId
+		);
 
 }
 

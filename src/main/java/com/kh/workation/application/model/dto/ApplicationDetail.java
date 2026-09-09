@@ -20,6 +20,7 @@ public class ApplicationDetail {
     private LocalDate startDate;
     private LocalDate endDate;
 
+    private Long facilityId;
     private String facilityName;
     private String region;
 
@@ -57,6 +58,7 @@ public class ApplicationDetail {
 
         // 시설 및 지역 세팅
         if (a.getFacility() != null) {
+        	this.facilityId = a.getFacility().getFacilityId();
             this.facilityName = a.getFacility().getFacilityName();
         }
         

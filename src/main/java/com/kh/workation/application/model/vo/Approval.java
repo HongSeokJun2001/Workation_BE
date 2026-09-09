@@ -36,7 +36,7 @@ public class Approval {
 	@Column(name = "WORKATION_ID", nullable = false)
 	private int workationId;
 
-	@Column(name = "ADMIN_ID", nullable = false)
+	@Column(name = "ADMIN_ID")
 	private Long adminId;
 	
 	@Column(name = "APPROVED_YN", nullable = false, columnDefinition="VARCHAR(20) DEFAULT 'APPLY'")
