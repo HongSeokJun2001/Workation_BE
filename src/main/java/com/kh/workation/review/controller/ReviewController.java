@@ -5,17 +5,21 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.kh.workation.auth.model.service.AuthService;
 import com.kh.workation.review.model.service.ReviewService;
@@ -24,6 +28,9 @@ import com.kh.workation.review.model.vo.Review;
 @CrossOrigin
 @RestController
 public class ReviewController {
+	
+	@Value("${file.upload-dir}")
+	private String uploadDir;
 
     @Autowired
     private ReviewService reviewService;
@@ -42,17 +49,6 @@ public class ReviewController {
         String token = authHeader.substring(7);
 
         return authService.isValidToken(token) ? token : null;
-    }
-
-
-    // Service에 넘겨줄 권한 구분
-    private String getRole(String token) {
-
-        if (authService.isAdminToken(token)) {
-            return "ADMIN";
-        }
-
-        return "EMPLOYEE";
     }
 
 
@@ -81,9 +77,10 @@ public class ReviewController {
     @PostMapping("/facilities/{facilityId}/reviews")
     public ResponseEntity<?> insertReview(
             @PathVariable("facilityId") Long facilityId,
-            @RequestBody Review review,
+            @ModelAttribute Review review,
+            @RequestParam(value = "upfiles", required = false) MultipartFile[] upfiles,
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
-
+    	
         String token = getToken(authHeader);
 
         if (token == null) {
@@ -103,8 +100,14 @@ public class ReviewController {
 
         try {
 
-            Review savedReview =
-                    reviewService.insertReview(facilityId, loginId, review);
+        	Review savedReview =
+        	        reviewService.insertReview(
+        	                facilityId,
+        	                loginId,
+        	                review,
+        	                upfiles,
+        	                uploadDir
+        	        );
 
             return ResponseEntity.ok(toResponse(savedReview));
 
@@ -136,17 +139,15 @@ public class ReviewController {
         }
 
         String loginId = authService.getLoginId(token);
-        String role = getRole(token);
 
         try {
 
-            Review updatedReview =
-                    reviewService.updateReview(
-                            reviewId,
-                            loginId,
-                            review,
-                            role
-                    );
+        	Review updatedReview =
+        	        reviewService.updateReview(
+        	                reviewId,
+        	                loginId,
+        	                review
+        	        );
 
             return ResponseEntity.ok(toResponse(updatedReview));
 
@@ -177,17 +178,21 @@ public class ReviewController {
         }
 
         String loginId = authService.getLoginId(token);
-        String role = getRole(token);
+        boolean isSuperAdmin = authService.isSuperAdminToken(token);
+        boolean isCompanyAdmin = authService.isCompanyAdminToken(token);
+        Long companyId = authService.getCompanyId(token);
 
         try {
 
             int result =
-                    reviewService.deleteReview(
-                            reviewId,
-                            loginId,
-                            role
-                    );
-
+            		reviewService.deleteReview(
+            		        reviewId,
+            		        loginId,
+            		        isSuperAdmin,
+            		        isCompanyAdmin,
+            		        companyId
+            		);
+            
             return ResponseEntity.ok(
                     result > 0 ? "success" : "fail"
             );
@@ -211,9 +216,19 @@ public class ReviewController {
         response.put("reviewId", review.getReviewId());
         response.put("employeeId", review.getEmployee().getEmployeeId());
         response.put("loginId", review.getEmployee().getLoginId());
+        response.put("companyId", review.getEmployee().getCompanyId());
         response.put("employeeName", review.getEmployee().getEmployeeName());
         response.put("rating", review.getRating());
         response.put("content", review.getContent());
+
+        response.put(
+                "images",
+                review.getImageList()
+                        .stream()
+                        .map(image -> image.getFilePath())
+                        .toList()
+        );
+
         response.put("createdDate", review.getCreatedDate());
         response.put("updatedDate", review.getUpdatedDate());
 

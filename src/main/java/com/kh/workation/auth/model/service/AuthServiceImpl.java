@@ -49,6 +49,7 @@ public class AuthServiceImpl implements AuthService {
                     .accessToken(generateToken(admin.getLoginId(),admin.getAdminId(), admin.getRole(), admin.getCompanyId()))
                         .tokenType("Bearer")
                         .role(admin.getRole())
+                        .companyId(admin.getCompanyId())
                         .build();
             }
 
@@ -63,6 +64,7 @@ public class AuthServiceImpl implements AuthService {
                     .accessToken(generateToken(employee.getLoginId(), null, Admin.ROLE_EMPLOYEE, employee.getCompanyId()))
                         .tokenType("Bearer")
                         .role(Admin.ROLE_EMPLOYEE)
+                        .companyId(employee.getCompanyId())
                         .build();
             }
 
