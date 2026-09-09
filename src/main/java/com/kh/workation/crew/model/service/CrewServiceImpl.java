@@ -49,9 +49,9 @@ public class CrewServiceImpl implements CrewService{
 	
 	public Page<Crew> searchCrewList(String keyword, Pageable pageable, String sort){
 		if ("endDate".equals(sort) || "deadline".equals(sort)) {
-			return crewDao.findByCrewNameContainingAndStatusOrderByEndDateAscCrewIdDesc(keyword, "Y", pageable);
+			return crewDao.searchByCrewNameOrCompanyNameOrderByEndDateAscCrewIdDesc(keyword, "Y", pageable);
 		}
-		return crewDao.findByCrewNameContainingAndStatusOrderByCrewIdDesc(keyword, "Y", pageable);
+		return crewDao.searchByCrewNameOrCompanyNameOrderByCrewIdDesc(keyword, "Y", pageable);
 	}
 	
 	
@@ -234,18 +234,25 @@ public class CrewServiceImpl implements CrewService{
 
 
 
-	
+	@Override
+	@Transactional(readOnly = true)
+	public List<Crew> selectActiveCreatedCrewList(String loginId) {
+		return crewDao.findByEmployeeLoginIdAndStatusOrderByCrewIdDesc(loginId, "Y");
+	}
 	
 	//--------------------------------------------------------
 	
 	
 	
 	
+	
+
 	@Override
 	@Transactional(readOnly = true)
 	public List<Crew> getLeaderCrews(String loginId) {
 		
-		return crewDao.findByEmployeeLoginIdAndStatusOrderByCrewIdDesc(loginId, "Y");
+		return crewDao.findFullCrewsByLeaderLoginId(loginId);
+		
 	}
 
 	@Override

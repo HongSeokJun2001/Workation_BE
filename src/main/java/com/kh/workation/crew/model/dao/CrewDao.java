@@ -12,17 +12,53 @@ import org.springframework.data.repository.query.Param;
 import com.kh.workation.crew.model.vo.Crew;
 
 public interface CrewDao extends JpaRepository<Crew, Integer>{
-
+	
+	// 특정 크루보다 뒤에 등록된 활성 크루 수 조회, 크루 상세 위치 계산에 사
 	long countByStatusAndCrewIdGreaterThan(String status, Integer crewId);
 
+	//활성 크루를 크루 번호 내림차 순으로 페이징 조회
 	Page<Crew> findByStatusOrderByCrewIdDesc(String status, Pageable pageable);
+	
+	//활성 크루를 모집 마감일 오름차 순으로 페이징 조회
 	Page<Crew> findByStatusOrderByEndDateAscCrewIdDesc(String status, Pageable pageable);
 
 
+	//크루 이름과 상태가 일치하는 크루를 크루 번호 내림차순으로 검색
 	Page<Crew> findByCrewNameContainingAndStatusOrderByCrewIdDesc(String keyword, String status, Pageable pageable);
-	Page<Crew> findByCrewNameContainingAndStatusOrderByEndDateAscCrewIdDesc(String keyword, String status, Pageable pageable);
+	
+	// 크루 이름 또는 회사명으로 활성 크루를 크루 번호 내림차순으로 검색
+	@Query("""
+			SELECT c
+			FROM Crew c
+			LEFT JOIN c.company comp
+			WHERE c.status = :status
+			  AND (
+			      c.crewName LIKE %:keyword%
+			      OR comp.companyName LIKE %:keyword%
+			  )
+			ORDER BY c.crewId DESC
+		""")
+	Page<Crew> searchByCrewNameOrCompanyNameOrderByCrewIdDesc(@Param("keyword") String keyword,
+																     @Param("status") String status,
+																     Pageable pageable);
+	
+	// 크루 이름 또는 회사명으로 활성 크루를 모집 마감일 오름차순으로 검색
+	@Query("""
+			SELECT c
+			FROM Crew c
+			LEFT JOIN c.company comp
+			WHERE c.status = :status
+			  AND (
+			      c.crewName LIKE %:keyword%
+			      OR comp.companyName LIKE %:keyword%
+			  )
+			ORDER BY c.endDate ASC, c.crewId DESC
+		""")
+	Page<Crew> searchByCrewNameOrCompanyNameOrderByEndDateAscCrewIdDesc(@Param("keyword") String keyword,
+																     @Param("status") String status,
+																     Pageable pageable);
 
-
+	// 크루 모집글을 삭제하지 않고 상태를 비활성('N')으로 변경하는 소프트 삭제
 	@Modifying
 	@Query("""
 			
@@ -34,8 +70,9 @@ public interface CrewDao extends JpaRepository<Crew, Integer>{
 			""")
 	int deleteCrew(@Param("crewId")int crewId);
 	
-	List<Crew> findByEmployeeLoginIdAndStatusOrderByCrewIdDesc(String loginId, String status);
-         
+    
+	
+	// 특정 직원이 작성한 정원이 마감된 활성 모집글 조회
 	@Query("SELECT c FROM Crew c " +
 		       "LEFT JOIN c.crewMemberHists h " +
 		       "WHERE c.employee.loginId = :loginId " +
@@ -48,7 +85,10 @@ public interface CrewDao extends JpaRepository<Crew, Integer>{
 		       ") " +
 		       "GROUP BY c.id " +
 		       "HAVING COUNT(h) = c.capacity")
-		List<Crew> findFullCrewsByLeaderLoginId(@Param("loginId") String loginId);
+	List<Crew> findFullCrewsByLeaderLoginId(@Param("loginId") String loginId);
+
+	// 특정 직원이 작성한 활성 모집글 조회
+	List<Crew> findByEmployeeLoginIdAndStatusOrderByCrewIdDesc(String loginId, String status);
 
 }
 

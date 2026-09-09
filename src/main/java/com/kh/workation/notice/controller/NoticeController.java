@@ -25,7 +25,6 @@ import com.kh.workation.auth.model.service.AuthService;
 import com.kh.workation.common.model.vo.PageInfo;
 import com.kh.workation.common.template.Pagination;
 import com.kh.workation.common.template.XssDefencePolicy;
-import com.kh.workation.member.model.vo.Admin;
 import com.kh.workation.notice.model.service.NoticeService;
 import com.kh.workation.notice.model.vo.Notice;
 
@@ -33,6 +32,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
@@ -74,27 +74,37 @@ public class NoticeController {
     // 401 = 너 누구야?
     // 403 = 너인 건 알겠는데 이 기능은 못 써.
 	
-    
+    // 공지사항 목록조
 	@Operation(summary="공지사항 전체목록 조회(페이징)", description="페이지 번호(cpage)에 해당하는 공지사항 목록을 조회합니다."
 													+ "응답 : {list : 공지사항목록, pi :페이지 정보}")
-	@ApiResponse(responseCode="200", description="조회성공",
-				content=@Content(mediaType="application/json",
-								examples=@ExampleObject(value="""
-										{
-											"list" : [{},{},{}],
-											"pi" : {
-												"listCount" : 42,
-												"currentPage" : 1,
-												"pageLimit" : 5,
-												"boardLimit" : 5,
-												"maxPage" : 9,
-												"startPage" : 1,
-												"endPage" : 5,
-											}
-										
-										}
-										
-										""")))
+	@ApiResponses({
+        @ApiResponse(
+            responseCode = "200",
+            description = "공지사항 목록 조회 성공",
+            content = @Content(
+                mediaType = "application/json",
+                examples = @ExampleObject(value = """
+                    {
+                        "list": [{}, {}, {}],
+                        "pi": {
+                            "listCount": 42,
+                            "currentPage": 1,
+                            "pageLimit": 5,
+                            "boardLimit": 5,
+                            "maxPage": 9,
+                            "startPage": 1,
+                            "endPage": 5
+                        }
+                    }
+                    """)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "401",
+            description = "인증되지 않은 사용자"
+        )
+    })
+	@SecurityRequirement(name = "JWT")
 	@GetMapping("/notices")
 	public ResponseEntity<HashMap<String,Object>> selectNoticeList(
 			@RequestParam(value="cpage", defaultValue="1")int currentPage,
@@ -108,39 +118,60 @@ public class NoticeController {
         
         
 		// 사용자가 요청한 currentPage 는 매개변수로 받아온 상태!!
-				// + boardLimit(한 페이지당 몇개씩 보여질건지), pageLimit(페이징바 숫자 갯수) 만 마저 셋팅
-				int boardLimit = 5;
-				int pageLimit = 5;
-				
-				// > 위의 값들을 가지고 Pageable 객체를 먼저 셋팅
-				Pageable pageable = PageRequest.of(currentPage - 1, boardLimit);
-				
-				// > 위에서 셋팅한 Pageable 객체를 넘기면서 실제 목록을 조회해오기 (구간별로)
-				//   이 때, 조회된 결과는 Page 객체로 받아온다!!
-				Page<Notice> page = noticeService.selectNoticeList(pageable);
-				
-				// > Page 객체로부터 조회된 리스트, 총 게시글의 갯수 구해보기
-				List<Notice> list = page.getContent();
-				
-				long listCount = page.getTotalElements();
-				// > 내부적으로 COUNT 함수를 실행해서 갯수를 세오는 것!!
-				
-				// > PageInfo 객체 생성하기
-				PageInfo pi = Pagination.getPageInfo((int)listCount, currentPage, 
-															pageLimit, boardLimit);
-				
-				HashMap<String, Object> hm = new HashMap<>();
-				
-				hm.put("list", list); // 실제 목록 (tbody) 에 출력할 용도
-				hm.put("pi", pi); // 페이징바 만들어낼 용도
-				
-				return ResponseEntity.status(HttpStatus.OK)
-									 .body(hm);
+		// + boardLimit(한 페이지당 몇개씩 보여질건지), pageLimit(페이징바 숫자 갯수) 만 마저 셋팅
+		int boardLimit = 5;
+		int pageLimit = 5;
+		
+		// > 위의 값들을 가지고 Pageable 객체를 먼저 셋팅
+		Pageable pageable = PageRequest.of(currentPage - 1, boardLimit);
+		
+		// > 위에서 셋팅한 Pageable 객체를 넘기면서 실제 목록을 조회해오기 (구간별로)
+		//   이 때, 조회된 결과는 Page 객체로 받아온다!!
+		Page<Notice> page = noticeService.selectNoticeList(pageable);
+		
+		// > Page 객체로부터 조회된 리스트, 총 게시글의 갯수 구해보기
+		List<Notice> list = page.getContent();
+		
+		long listCount = page.getTotalElements();
+		// > 내부적으로 COUNT 함수를 실행해서 갯수를 세오는 것!!
+		
+		// > PageInfo 객체 생성하기
+		PageInfo pi = Pagination.getPageInfo((int)listCount, currentPage, 
+													pageLimit, boardLimit);
+		
+		HashMap<String, Object> hm = new HashMap<>();
+		
+		hm.put("list", list); // 실제 목록 (tbody) 에 출력할 용도
+		hm.put("pi", pi); // 페이징바 만들어낼 용도
+		
+		return ResponseEntity.status(HttpStatus.OK)
+							 .body(hm);
 					
 	}
 	
-	@Operation(summary="공지사항 작성", description="공시자항을 작성합니다. JWT토큰에 작성자정보를 추출하므로 로그인이 필요합니다.")
-	@ApiResponse(responseCode="200", description="body 로 success/fail 응답")
+	
+	// ************* 공지사항 작성 *****************
+	
+	@Operation(summary="공지사항 작성", description="공시자항을 작성합니다. SUPER_ADMIN 권한을 가진 관리자만 공지사항을 작성할 수 있습니다."
+			+ "										WT토큰에 작성자정보를 추출하므로 로그인이 필요합니다.")
+	@ApiResponses({
+        @ApiResponse(
+            responseCode = "200",
+            description = "공지사항 작성 성공"
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "필수 입력값 누락"
+        ),
+        @ApiResponse(
+            responseCode = "401",
+            description = "로그인하지 않았거나 JWT가 유효하지 않음"
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "SUPER_ADMIN 권한이 없음"
+        )
+    })
 	@SecurityRequirement(name="JWT")
 	@PostMapping("/notices")
 	public ResponseEntity<String> insertNotice(@RequestBody Notice n,
@@ -196,9 +227,27 @@ public class NoticeController {
 	}
 	
 	
-	//공지사항 상세 조회용 컨트롤러
+	
+	
+	
+	// *********** 공지사항 상세 조회 ****************
 	// 모든 로그인 사용자가 조회 가능 
 	@Operation(summary = "공지사항 상세 조회", description = "공지사항 상세 내용을 조회하고 조회수를 증가시킵니다.")
+	@ApiResponses({
+        @ApiResponse(
+            responseCode = "200",
+            description = "공지사항 상세 조회 성공"
+        ),
+        @ApiResponse(
+            responseCode = "401",
+            description = "인증되지 않은 사용자"
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "존재하지 않는 공지사항"
+        )
+    })
+    @SecurityRequirement(name = "JWT")
 	@GetMapping("/notices/{noticeId}")
 	public ResponseEntity<Notice> selectNotice(@PathVariable("noticeId") int noticeId,
 			@RequestHeader(value = "Authorization", required = false) String authHeader){
@@ -224,25 +273,81 @@ public class NoticeController {
 		
 		
 	}
-
+	
+	
+	
+	
+	// ************ 공지사항 이전/다음글 조회 ***************
+	// 백엔드에서 처리하는 이유 : 프론트에서 처리할 경우 활성화되지 않은 (삭제된) 공지사항도 조회될 수 있음
+	@Operation(
+	        summary = "공지사항 이전/다음글 조회",
+	        description = "현재 공지사항을 기준으로 이전글과 다음글을 조회합니다."
+	    )
+	    @ApiResponses({
+	        @ApiResponse(
+	            responseCode = "200",
+	            description = "이전/다음글 조회 성공"
+	        ),
+	        @ApiResponse(
+	            responseCode = "401",
+	            description = "인증되지 않은 사용자"
+	        )
+	    })
+	@SecurityRequirement(name = "JWT")
 	@GetMapping("/notices/{noticeId}/navigation")
 	public ResponseEntity<HashMap<String, Notice>> selectNoticeNavigation(@PathVariable("noticeId") int noticeId,
 			@RequestHeader(value = "Authorization", required = false) String authHeader) {
+		
 		String token = getToken(authHeader);
+		
+		
 		if (!hasAnyAuthUser(token)) {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
 		}
 
 		HashMap<String, Notice> navigation = new HashMap<>();
+		
+		
 		navigation.put("previous", noticeService.selectPreviousNotice(noticeId));
 		navigation.put("next", noticeService.selectNextNotice(noticeId));
+		
+		
 		return ResponseEntity.ok(navigation);
 	}
 	
 	
-	// 공지사항 수정용 컨트롤러
+	
+	
+	
+	
+	
+	
+	
+	// ************** 공지사항 수정***************8
 	// SUPER_ADMIN 만 가능
 	@Operation(summary = "공지사항 수정", description = "최고관리자가 공지사항을 수정합니다.")
+	@ApiResponses({
+        @ApiResponse(
+            responseCode = "200",
+            description = "공지사항 수정 성공"
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "필수 입력값 누락"
+        ),
+        @ApiResponse(
+            responseCode = "401",
+            description = "로그인하지 않았거나 JWT가 유효하지 않음"
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "SUPER_ADMIN 권한이 없음"
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "존재하지 않는 공지사항"
+        )
+    })
 	@SecurityRequirement(name = "JWT")
 	@PutMapping("/notices/{noticeId}")
 	public ResponseEntity<String> updateNotice(@PathVariable("noticeId") int noticeId,
@@ -292,9 +397,32 @@ public class NoticeController {
         return ResponseEntity.ok(result != null ? "success" : "fail");
 	}
 	
-	//공지사항 삭제용 컨트롤러
+	
+	
+	
+	
+	
+	// ***************공지사항 삭제****************
 	// SUPER_ADMIN만 가능
 	@Operation(summary = "공지사항 삭제", description = "최고관리자가 공지사항을 삭제합니다.")
+	@ApiResponses({
+        @ApiResponse(
+            responseCode = "200",
+            description = "공지사항 삭제 성공"
+        ),
+        @ApiResponse(
+            responseCode = "401",
+            description = "로그인하지 않았거나 JWT가 유효하지 않음"
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "SUPER_ADMIN 권한이 없음"
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "존재하지 않는 공지사항"
+        )
+    })
 	@SecurityRequirement(name = "JWT")
 	@DeleteMapping("/notices/{noticeId}")
 	public ResponseEntity<String> deleteNotice(@PathVariable("noticeId") int noticeId,
