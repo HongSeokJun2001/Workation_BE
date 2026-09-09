@@ -156,6 +156,21 @@ public class ApplicationServiceImpl implements ApplicationService{
 
 	    // 3. 해당 크루의 현재 활동 중인(ACTIVE) 크루원 목록 조회
 	    List<CrewMemberHist> activeMembers = crewMemberHistDao.findByCrewCrewIdAndStatusWithEmployee(crew.getCrewId(), "ACTIVE");
+	    
+	    for (CrewMemberHist memberHist : activeMembers) {
+	        Employee employee = memberHist.getEmployee();
+	        if (employee != null) {
+	            int currentDays = employee.getWorkationAvailDays() != null ? employee.getWorkationAvailDays() : 0;
+	            
+	            // 보유 일수가 차감할 일수보다 적은 크루원이 있는 경우
+	            if (currentDays < usedDays) {
+	                throw new IllegalArgumentException(
+	                    String.format("크루원 '%s'님의 잔여 워케이션 일수(%d일)가 필요 일수(%d일)보다 부족하여 신청할 수 없습니다.", 
+	                        employee.getEmployeeName(), currentDays, usedDays)
+	                );
+	            }
+	        }
+	    }
 
 	    // 4. 크루원들의 잔여 워케이션 일수(workationAvailDays) 차감
 	    for (CrewMemberHist memberHist : activeMembers) {

@@ -143,12 +143,14 @@ public class ApplicationController {
 	    
 	    a.setCompany(company);
 		
-		Application insertAp = applicationService.insertApplication(a);
-		
-		String message = (insertAp != null) ? "success" : "fail";
-		
-		return ResponseEntity.status(HttpStatus.OK)
-				 .body(message);
+	    try {
+	        Application insertAp = applicationService.insertApplication(a);
+	        String message = (insertAp != null) ? "success" : "fail";
+	        return ResponseEntity.status(HttpStatus.OK).body(message);
+	        
+	    } catch (IllegalArgumentException e) {
+	        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+	    }
 	}
 	
 	@PutMapping("/application/approve/{workationId}")
