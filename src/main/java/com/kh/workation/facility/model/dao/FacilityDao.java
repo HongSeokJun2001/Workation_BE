@@ -14,6 +14,8 @@ import com.kh.workation.facility.model.vo.Facility;
 @Repository
 public interface FacilityDao extends JpaRepository<Facility, Long> {
 
+    long countByStatus(String status);
+
     // ================= [일반 사용자 / 비로그인 전용 (ACTIVE)] =================
 
     // 1. ACTIVE 목록 - 최신순
