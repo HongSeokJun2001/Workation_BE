@@ -44,11 +44,14 @@ public interface CrewService {
 
 	// 크루 탈퇴
 	int leaveCrew(int crewId, String loginId);
-	
+
+	// 내가 모집 중인 활성 크루 목록 조회
+	List<Crew> selectActiveCreatedCrewList(String loginId);
 	
 	
 	// * 워케이션 신청용
 	List<Crew> getLeaderCrews(String loginId);
+	
 
 	long countActiveCrewsAfter(int crewId);
 	
