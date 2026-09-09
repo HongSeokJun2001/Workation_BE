@@ -56,20 +56,65 @@ jobs:
           script: |
             set -e
             mkdir -p /home/ubuntu/workation-backend/uploads
+            if [ -f /home/ubuntu/workation-backend/workation.jar ]; then
+              cp /home/ubuntu/workation-backend/workation.jar /home/ubuntu/workation-backend/workation.previous.jar
+            fi
             mv /home/ubuntu/workation-upload/workation-*.jar /home/ubuntu/workation-backend/workation.jar
+
+            {
+              printf '#!/bin/bash\n'
+              printf 'export RDS_HOST=%q\n' "$RDS_HOST"
+              printf 'export DB_USERNAME=%q\n' "$DB_USERNAME"
+              printf 'export DB_PASSWORD=%q\n' "$DB_PASSWORD"
+              printf 'export JWT_SECRET=%q\n' "$JWT_SECRET"
+              printf 'export SUPER_ADMIN_LOGIN_ID=%q\n' "$SUPER_ADMIN_LOGIN_ID"
+              printf 'export SUPER_ADMIN_PASSWORD=%q\n' "$SUPER_ADMIN_PASSWORD"
+              printf 'export MAIL_USERNAME=%q\n' "$MAIL_USERNAME"
+              printf 'export MAIL_PASSWORD=%q\n' "$MAIL_PASSWORD"
+              printf 'export GEMINI_API_KEY=%q\n' "$GEMINI_API_KEY"
+              printf 'exec java -jar /home/ubuntu/workation-backend/workation.jar\n'
+            } > /home/ubuntu/workation-backend/start.sh
+            chmod 700 /home/ubuntu/workation-backend/start.sh
+
             if [ -f /home/ubuntu/workation-backend/workation.pid ]; then
               kill "$(cat /home/ubuntu/workation-backend/workation.pid)" 2>/dev/null || true
               rm -f /home/ubuntu/workation-backend/workation.pid
               sleep 5
             fi
-            cd /home/ubuntu/workation-backend
-            nohup java -jar /home/ubuntu/workation-backend/workation.jar > /home/ubuntu/workation-backend/app.log 2>&1 < /dev/null &
-            echo $! > /home/ubuntu/workation-backend/workation.pid
+
+            sudo tee /etc/systemd/system/workation.service > /dev/null <<'EOF'
+            [Unit]
+            Description=Workation Backend
+            After=network-online.target
+            Wants=network-online.target
+
+            [Service]
+            Type=simple
+            User=ubuntu
+            WorkingDirectory=/home/ubuntu/workation-backend
+            ExecStart=/home/ubuntu/workation-backend/start.sh
+            Restart=always
+            RestartSec=5
+            SuccessExitStatus=143
+
+            [Install]
+            WantedBy=multi-user.target
+            EOF
+
+            sudo systemctl daemon-reload
+            sudo systemctl enable workation.service
+            sudo systemctl restart workation.service
+
             for attempt in $(seq 1 30); do
               if curl -fsS http://127.0.0.1:8007/workation/public/platform/stats > /dev/null; then
                 exit 0
               fi
               sleep 2
             done
-            tail -n 100 /home/ubuntu/workation-backend/app.log
+
+            sudo journalctl -u workation.service -n 100 --no-pager
+            if [ -f /home/ubuntu/workation-backend/workation.previous.jar ]; then
+              mv /home/ubuntu/workation-backend/workation.previous.jar /home/ubuntu/workation-backend/workation.jar
+              sudo systemctl restart workation.service
+            fi
             exit 1
