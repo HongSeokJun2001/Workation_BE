@@ -1,15 +1,17 @@
 package com.kh.workation.application.model.service;
 
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.security.access.AccessDeniedException;
 
 import com.kh.workation.application.model.dao.ApplicationDao;
 import com.kh.workation.application.model.dao.ApprovalDao;
@@ -142,68 +144,114 @@ public class ApplicationServiceImpl implements ApplicationService{
 	
 	@Override
 	@Transactional
-    public Application insertApplication(Application a) {
-		
-		// 1. 크루 정보 조회
+	public Application insertApplication(Application a) {
+
+	    // 1. 크루 정보 조회
 	    Crew crew = crewDao.findById(a.getCrew().getCrewId())
 	            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 크루입니다."));
 
-	    // 2. 크루에 설정된 워케이션 사용 일수(workUsedDays) 가져오기
-	    Integer usedDays = crew.getWorkUsedDays();
-	    if (usedDays == null || usedDays <= 0) {
-	        usedDays = 1; // 기본값 방어 로직
+	    // 2. 예약 날짜 검증 및 실제 신청 일수 계산 (ChronoUnit 활용)
+	    ReservationDate resDate = a.getReservationDate();
+	    if (resDate == null || resDate.getStartDate() == null || resDate.getEndDate() == null) {
+	        throw new IllegalArgumentException("예약 시작일과 종료일을 올바르게 입력해주세요.");
 	    }
 
+	    LocalDate startDate = resDate.getStartDate();
+	    LocalDate endDate = resDate.getEndDate();
+
+	    if (endDate.isBefore(startDate)) {
+	        throw new IllegalArgumentException("종료일은 시작일보다 이전일 수 없습니다.");
+	    }
+
+	    // 시작일과 종료일을 포함한 일수 계산 (예: 10일 ~ 10일 = 1일 사용)
+	    int requestedDays = (int) ChronoUnit.DAYS.between(startDate, endDate) + 1;
+
 	    // 3. 해당 크루의 현재 활동 중인(ACTIVE) 크루원 목록 조회
-	    List<CrewMemberHist> activeMembers = crewMemberHistDao.findByCrewCrewIdAndStatusWithEmployee(crew.getCrewId(), "ACTIVE");
-	    
+	    List<CrewMemberHist> activeMembers =
+	            crewMemberHistDao.findByCrewCrewIdAndStatusWithEmployee(
+	                    crew.getCrewId(),
+	                    "ACTIVE"
+	            );
+
+	    // 3-1. 워케이션 사용 가능 일수가 부족한 크루원 확인
+	    List<String> insufficientMembers = new ArrayList<>();
+
 	    for (CrewMemberHist memberHist : activeMembers) {
+
 	        Employee employee = memberHist.getEmployee();
+
 	        if (employee != null) {
-	            int currentDays = employee.getWorkationAvailDays() != null ? employee.getWorkationAvailDays() : 0;
-	            
-	            // 보유 일수가 차감할 일수보다 적은 크루원이 있는 경우
-	            if (currentDays < usedDays) {
-	                throw new IllegalArgumentException(
-	                    String.format("크루원 '%s'님의 잔여 워케이션 일수(%d일)가 필요 일수(%d일)보다 부족하여 신청할 수 없습니다.", 
-	                        employee.getEmployeeName(), currentDays, usedDays)
+
+	            int currentDays =
+	                    employee.getWorkationAvailDays() != null
+	                            ? employee.getWorkationAvailDays()
+	                            : 0;
+
+	            // 보유 일수가 이번에 신청한 일수보다 적은 경우
+	            if (currentDays < requestedDays) {
+
+	                insufficientMembers.add(
+	                        String.format(
+	                                "크루원 '%s'님의 잔여 워케이션 일수(%d일)\n",
+	                                employee.getEmployeeName(),
+	                                currentDays
+	                        )
 	                );
 	            }
 	        }
 	    }
 
-	    // 4. 크루원들의 잔여 워케이션 일수(workationAvailDays) 차감
+	    // 3-2. 부족한 크루원이 한 명이라도 있으면 신청 중단
+	    if (!insufficientMembers.isEmpty()) {
+
+	        throw new IllegalArgumentException(
+	                String.format(
+	                        "워케이션 신청이 불가능합니다.\n" +
+	                        "신청 기간은 %d일이며, 다음 크루원의 잔여 일수가 부족합니다.\n%s",
+	                        requestedDays,
+	                        String.join("", insufficientMembers)
+	                )
+	        );
+	    }
+
+	    // 4. 모든 크루원이 충분한 경우에만 실제 신청 일수(requestedDays)만큼 차감
 	    for (CrewMemberHist memberHist : activeMembers) {
+
 	        Employee employee = memberHist.getEmployee();
-	        
+
 	        if (employee != null) {
-	            int currentDays = employee.getWorkationAvailDays() != null ? employee.getWorkationAvailDays() : 0;
-	            
-	            // 크루의 workUsedDays만큼 일수 차감 (음수 방지)
-	            employee.setWorkationAvailDays(Math.max(0, currentDays - usedDays));
-	            
+
+	            int currentDays =
+	                    employee.getWorkationAvailDays() != null
+	                            ? employee.getWorkationAvailDays()
+	                            : 0;
+
+	            // 신청 일수만큼 차감
+	            employee.setWorkationAvailDays(
+	                    Math.max(0, currentDays - requestedDays)
+	            );
+
 	            // 변경 사항 저장
-	            employeeDao.save(employee); 
+	            employeeDao.save(employee);
 	        }
 	    }
 
-        // ReservationDate(예약날짜)
-        if (a.getReservationDate() != null) {
-            ReservationDate savedDate = reservationDateDao.save(a.getReservationDate());
-            a.setReservationDate(savedDate);
-        }
+	    // 5. ReservationDate(예약날짜) 저장
+	    ReservationDate savedDate = reservationDateDao.save(resDate);
+	    a.setReservationDate(savedDate);
 
-        // Application(신청 정보)
-        Application savedApp = applicationDao.save(a);
+	    // 6. Application(신청 정보) 저장
+	    Application savedApp = applicationDao.save(a);
 
-        // Progress(진행상태)
-        Progress progress = new Progress();
-        progress.setWorkationId(savedApp.getWorkationId()); 
-        progress.setStatus("APPLY");                        
-        progressDao.save(progress);
+	    // 7. Progress(진행상태) 저장
+	    Progress progress = new Progress();
+	    progress.setWorkationId(savedApp.getWorkationId());
+	    progress.setStatus("APPLY");
 
-        return savedApp;
-    }
+	    progressDao.save(progress);
+
+	    return savedApp;
+	}
 	
 	@Override
 	@Transactional
@@ -257,14 +305,51 @@ public class ApplicationServiceImpl implements ApplicationService{
 	        throw new IllegalStateException("이미 취소 처리된 신청 건입니다.");
 	    }
 	    
-	    // 승인 상태에서 취소하는 경우, 차감했던 시설 객실 수 복구
-	    if("CONFIRM".equals(progress.getStatus())) {
-	    	Facility facility = app.getFacility();
-	    	if(facility != null) {
-	    		facility.increaseRoomCount(); // Facility 엔터티에 객실 수 + 1 로직 호출
-	    	}
+	    // 1. 승인 상태에서 취소하는 경우, 차감했던 시설 객실 수 복구
+	    if ("CONFIRM".equals(progress.getStatus())) {
+	        Facility facility = app.getFacility();
+	        if (facility != null) {
+	            facility.increaseRoomCount(); // Facility 엔티티에 객실 수 + 1 로직 호출
+	        }
 	    }
 	    
+	    // 2. 예약 날짜를 기반으로 복구할 실제 워케이션 일수 계산
+	    ReservationDate resDate = app.getReservationDate();
+	    int restoreDays = 0;
+
+	    if (resDate != null && resDate.getStartDate() != null && resDate.getEndDate() != null) {
+	        restoreDays = (int) ChronoUnit.DAYS.between(resDate.getStartDate(), resDate.getEndDate()) + 1;
+	    }
+	    
+	    // 3. 크루원 일수 복구 처리
+	    if (app.getCrew() != null && restoreDays > 0) {
+	        // 크루 정보 조회
+	        Crew crew = crewDao.findById(app.getCrew().getCrewId())
+	                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 크루입니다."));
+
+	        // 해당 크루의 현재 활동 중인(ACTIVE) 크루원 및 Employee 조회
+	        List<CrewMemberHist> activeMembers = 
+	                crewMemberHistDao.findByCrewCrewIdAndStatusWithEmployee(crew.getCrewId(), "ACTIVE");
+
+	        // 각 크루원들의 잔여 워케이션 일수(workationAvailDays)에 실제 예약 일수(+restoreDays) 복구
+	        for (CrewMemberHist memberHist : activeMembers) {
+	            Employee employee = memberHist.getEmployee();
+
+	            if (employee != null) {
+	                int currentDays = employee.getWorkationAvailDays() != null 
+	                        ? employee.getWorkationAvailDays() 
+	                        : 0;
+
+	                // 실제 신청했던 일수만큼 복구
+	                employee.setWorkationAvailDays(currentDays + restoreDays);
+
+	                // 변경 사항 저장
+	                employeeDao.save(employee);
+	            }
+	        }
+	    }
+	    
+	    // 4. 상태 변경 및 승인/거절 이력 저장
 	    progress.setStatus("CANCELLED");
 	    
 	    Approval approval = new Approval();
@@ -273,36 +358,6 @@ public class ApplicationServiceImpl implements ApplicationService{
 	    approval.setApprovedYn("REJECT");
 	    approval.setRejectReason(reason);
 	    approvalDao.save(approval);
-	    
-	    if (app.getCrew() != null) {
-	        // 크루 정보 조회
-	        Crew crew = crewDao.findById(app.getCrew().getCrewId())
-	                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 크루입니다."));
-
-	        // 크루에 설정되었던 워케이션 사용 일수 가져오기
-	        Integer usedDays = crew.getWorkUsedDays();
-	        if (usedDays == null || usedDays <= 0) {
-	            usedDays = 1; // 기본값 방어
-	        }
-
-	        // 해당 크루의 현재 활동 중인(ACTIVE) 크루원 및 Employee 조회 (Fetch Join 적용 권장)
-	        List<CrewMemberHist> activeMembers = crewMemberHistDao.findByCrewCrewIdAndStatusWithEmployee(crew.getCrewId(), "ACTIVE");
-
-	        // 크루원들의 잔여 워케이션 일수(workationAvailDays) 복구 (+usedDays)
-	        for (CrewMemberHist memberHist : activeMembers) {
-	            Employee employee = memberHist.getEmployee();
-
-	            if (employee != null) {
-	                int currentDays = employee.getWorkationAvailDays() != null ? employee.getWorkationAvailDays() : 0;
-
-	                // 차감했던 일수 복구
-	                employee.setWorkationAvailDays(currentDays + usedDays);
-
-	                // 변경 사항 저장
-	                employeeDao.save(employee);
-	            }
-	        }
-	    }
 	    
 	    return app;
 	}

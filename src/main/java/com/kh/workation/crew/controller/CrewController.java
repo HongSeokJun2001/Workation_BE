@@ -493,7 +493,6 @@ public class CrewController {
         String token = authHeader.substring(7);
 
         String loginId = authService.getLoginId(token);
-        System.out.println("조회하려는 loginId = " + loginId);
         
         List<Crew> crewList = crewService.getLeaderCrews(loginId);
         
