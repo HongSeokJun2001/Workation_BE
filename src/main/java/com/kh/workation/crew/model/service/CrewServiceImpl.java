@@ -245,7 +245,7 @@ public class CrewServiceImpl implements CrewService{
 	@Transactional(readOnly = true)
 	public List<Crew> getLeaderCrews(String loginId) {
 		
-		return crewDao.findByEmployeeLoginIdAndStatusOrderByCrewIdDesc(loginId, "Y");
+		return crewDao.findFullCrewsByLeaderLoginId(loginId);
 	}
 
 	@Override

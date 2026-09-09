@@ -34,39 +34,6 @@ public class ReservationController {
 	@Autowired
 	private ReservationService reservationService;
 	
-	@GetMapping("/reservation/list")
-	public ResponseEntity<HashMap<String, Object>> getReservationList(
-			@RequestParam(value="cpage", defaultValue="1") int currentPage){
-		
-		int pageLimit = 10;
-		int boardLimit = 10;
-		
-		Pageable pageable = PageRequest.of(currentPage - 1, boardLimit);
-		
-		Page<ReservationList> page = reservationService.getReservationList(pageable);
-		
-		List<ReservationList> list = page.getContent();
-		
-		long listCount = page.getTotalElements();
-		
-		PageInfo pi = Pagination.getPageInfo((int)listCount, currentPage, 
-				pageLimit, boardLimit);
-		
-		HashMap<String, Object> hm = new HashMap<>();
-		
-		hm.put("pi", pi);
-		hm.put("list", list);
-		
-		return ResponseEntity.status(HttpStatus.OK)
-				 .body(hm);
-	}
-	
-	@GetMapping("/reservation/{reservationId}")
-	public ResponseEntity<ReservationDetail> getReservationDetail(@PathVariable("reservationId") int reservationId) {
-		ReservationDetail detail = reservationService.getReservationDetail(reservationId);
-        return ResponseEntity.ok(detail);
-    }
-	
 	
 	@PutMapping("/reservation/cancel/{workationId}")
 	public ResponseEntity<String> cancelReservation(@PathVariable("workationId") int workationId, @RequestBody Map<String, String> body, HttpServletRequest request) {
