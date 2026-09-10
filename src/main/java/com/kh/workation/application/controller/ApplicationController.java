@@ -171,14 +171,31 @@ public class ApplicationController {
 	
 	@PutMapping("/application/cancel/{workationId}")
 	public ResponseEntity<String> cancelApplication(@PathVariable("workationId") int workationId,@RequestBody Map<String, String> body, HttpServletRequest request) {
-		
+
 		String authHeader = request.getHeader("Authorization");
 		
 		String token = authHeader.substring(7);
 	    Long adminId = authService.getAdminId(token);
 	    String reason = body.get("reason");
 		
-	    Application a = applicationService.cancelApplication(workationId, adminId, reason);
+	    Application a = applicationService.cancelApplication(workationId, adminId, reason, null);
+	    
+	    String message = (a != null) ? "success" : "fail";
+	    
+	    return ResponseEntity.status(HttpStatus.OK)
+				 .body(message);
+	}
+	
+	@PutMapping("/application/user/cancel/{workationId}")
+	public ResponseEntity<String> userCancelApplication(@PathVariable("workationId") int workationId,@RequestBody Map<String, String> body, HttpServletRequest request) {
+				
+		String authHeader = request.getHeader("Authorization");
+		
+		String token = authHeader.substring(7);
+		String loginId = authService.getLoginId(token);
+	    String reason = body.get("reason");
+		
+	    Application a = applicationService.cancelApplication(workationId, null, reason, loginId);
 	    
 	    String message = (a != null) ? "success" : "fail";
 	    

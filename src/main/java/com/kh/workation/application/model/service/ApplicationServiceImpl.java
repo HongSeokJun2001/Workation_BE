@@ -293,7 +293,7 @@ public class ApplicationServiceImpl implements ApplicationService{
 	
 	@Override
 	@Transactional
-	public Application cancelApplication(int workationId, Long adminId, String reason) {
+	public Application cancelApplication(int workationId, Long adminId, String reason, String loginId) {
 	    
 	    Application app = applicationDao.findById(workationId)
 	            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 신청 건입니다."));
@@ -303,6 +303,22 @@ public class ApplicationServiceImpl implements ApplicationService{
 	    
 	    if ("CANCELLED".equals(progress.getStatus())) {
 	        throw new IllegalStateException("이미 취소 처리된 신청 건입니다.");
+	    }
+	    
+	    if (adminId == null) {
+	        if (loginId == null) {
+	            throw new IllegalStateException("인증 정보가 올바르지 않습니다.");
+	        }
+
+	        boolean isCrewLeader = false;
+	        if (app.getCrew() != null && app.getCrew().getEmployee() != null) {
+	            String leaderLoginId = app.getCrew().getEmployee().getLoginId(); 
+	            isCrewLeader = loginId.equals(leaderLoginId);
+	        }
+
+	        if (!isCrewLeader) {
+	            throw new IllegalStateException("해당 예약을 취소할 권한이 없습니다.");
+	        }
 	    }
 	    
 	    // 1. 승인 상태에서 취소하는 경우, 차감했던 시설 객실 수 복구

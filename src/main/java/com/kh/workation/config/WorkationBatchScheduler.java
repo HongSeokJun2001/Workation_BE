@@ -20,7 +20,7 @@ public class WorkationBatchScheduler {
 	
 	private final ApplicationService ApplicationService;
 	
-	@Scheduled(cron = "0 0 0 * * *") // 기존 자정 실행 주석
+	@Scheduled(cron = "0 30 0 * * *")
     @Transactional
     public void completeFinishedWorkations() {
         log.info("[Batch] 기간 종료된 워케이션 완료 처리 시작 - 실행 시각: {}", LocalDateTime.now());
