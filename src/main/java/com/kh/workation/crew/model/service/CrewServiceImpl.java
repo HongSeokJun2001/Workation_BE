@@ -75,7 +75,9 @@ public class CrewServiceImpl implements CrewService{
 		c.setEmployee(employee);
 		c.setCompany(companyDao.getReferenceById(employee.getCompanyId()));
 		Crew savedCrew = crewDao.save(c);
+
 		joinCrew(savedCrew.getCrewId(), loginId);
+
 		return savedCrew;
 		
 	}
@@ -172,22 +174,25 @@ public class CrewServiceImpl implements CrewService{
 	        return "모집 기간이 종료되었습니다.";
 	    }
 
-	    List<CrewMemberHist> activeMembers = crewMemberHistDao
+boolean isCreator = crew.getEmployee() != null
+            && loginId.equals(crew.getEmployee().getLoginId());
+
+    List<CrewMemberHist> activeMembers = crewMemberHistDao
 			.findByCrewCrewIdAndStatusWithEmployee(crewId, "ACTIVE");
-	    long memberCount = activeMembers.stream()
+    long memberCount = activeMembers.stream()
 			.map(CrewMemberHist::getEmployee)
 			.filter(member -> member != null)
 			.map(Employee::getEmployeeId)
 			.distinct()
 			.count();
-	    boolean ownerAlreadyIncluded = crew.getEmployee() != null && activeMembers.stream()
+    boolean ownerAlreadyIncluded = crew.getEmployee() != null && activeMembers.stream()
 			.anyMatch(member -> member.getEmployee() != null
 					&& crew.getEmployee().getEmployeeId().equals(member.getEmployee().getEmployeeId()));
-	    if (crew.getEmployee() != null && !ownerAlreadyIncluded) {
+    if (crew.getEmployee() != null && !ownerAlreadyIncluded) {
 		memberCount++;
-	    }
-	    if (crew.getCapacity() != null && memberCount >= crew.getCapacity()) {
-	        return "모집 정원이 마감되었습니다.";
+    }
+    if (!isCreator && crew.getCapacity() != null && memberCount >= crew.getCapacity()) {
+        return "모집 정원이 마감되었습니다.";
 	    }
 
 	    int requiredDays = crew.getWorkUsedDays() == null ? 1 : crew.getWorkUsedDays();

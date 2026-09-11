@@ -9,4 +9,6 @@ import com.kh.workation.review.model.vo.Review;
 public interface ReviewDao extends JpaRepository<Review, Long> {
 
     List<Review> findByFacilityFacilityIdOrderByCreatedDateDesc(Long facilityId);
+
+    boolean existsByFacilityFacilityIdAndEmployeeEmployeeId(Long facilityId, Long employeeId);
 }

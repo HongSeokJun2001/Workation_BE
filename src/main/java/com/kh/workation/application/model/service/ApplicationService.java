@@ -22,7 +22,7 @@ public interface ApplicationService {
 	
 	Application approveApplication(int workationId, Long AdminId);
 	
-	Application cancelApplication(int workationId, Long AdminId, String reason);
+	Application cancelApplication(int workationId, Long AdminId, String reason, String loginId);
 	
 	int updateFinishedWorkationStatus();
 	

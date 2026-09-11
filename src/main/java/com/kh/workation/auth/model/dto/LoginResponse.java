@@ -17,5 +17,8 @@ public class LoginResponse {
 
 	@Schema(description = "로그인한 사용자의 권한", example = "SUPER")
     private String role;
+	
+	@Schema(description = "소속 회사 번호", example = "1")
+	private Long companyId;
 
 }
