@@ -24,7 +24,7 @@ public interface ApplicationService {
 	
 	Application cancelApplication(int workationId, Long AdminId, String reason, String loginId);
 	
-	int updateFinishedWorkationStatus();
+	void updateFinishedWorkationStatus();
 	
 	
 }

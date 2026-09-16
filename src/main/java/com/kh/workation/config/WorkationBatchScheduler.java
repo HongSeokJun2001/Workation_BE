@@ -23,13 +23,11 @@ public class WorkationBatchScheduler {
 	@Scheduled(cron = "0 30 0 * * *")
     @Transactional
     public void completeFinishedWorkations() {
-        log.info("[Batch] 기간 종료된 워케이션 완료 처리 시작 - 실행 시각: {}", LocalDateTime.now());
 
         try {
             // 1. 어제 날짜로 종료되었으나 아직 COMPLETE가 아닌 데이터 상태 변경
-            int updatedCount = ApplicationService.updateFinishedWorkationStatus();
+            ApplicationService.updateFinishedWorkationStatus();
             
-            log.info("[Batch] 총 {}건의 워케이션이 성공적으로 완료 처리되었습니다.", updatedCount);
         } catch (Exception e) {
             log.error("[Batch] 워케이션 자동 완료 처리 중 오류 발생: ", e);
         }
