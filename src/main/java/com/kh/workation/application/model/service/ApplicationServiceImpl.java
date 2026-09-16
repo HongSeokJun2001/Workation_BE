@@ -380,13 +380,12 @@ public class ApplicationServiceImpl implements ApplicationService{
 	
 	@Override
     @Transactional(readOnly = false)
-    public int updateFinishedWorkationStatus() {
+    public void updateFinishedWorkationStatus() {
         LocalDate today = LocalDate.now();
 
      // 1. 오늘 이전 날짜로 끝난 진행 중 신청건 목록 조회
         List<Progress> expiredProgressList = progressDao.findExpiredProgressList(today);
 
-        int count = 0;
         for (Progress progress : expiredProgressList) {
             // Progress 상태 변경
             progress.setStatus("COMPLETED");
@@ -404,12 +403,6 @@ public class ApplicationServiceImpl implements ApplicationService{
                 .ifPresent(reservation -> {
                     reservation.setStatus("COMPLETED");
                 });
-
-            count++;
         }
-
-        return count;
     }
-	
-	
 }
